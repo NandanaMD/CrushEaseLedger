@@ -1,4 +1,5 @@
 using CrushEase.Data;
+using CrushEase.Services;
 using CrushEase.Utils;
 
 namespace CrushEase.Forms;
@@ -6,11 +7,19 @@ namespace CrushEase.Forms;
 public partial class MainForm : Form
 {
     private System.Windows.Forms.Timer? _backupTimer;
+    private System.Windows.Forms.Timer? _idleTimer;
+    private DateTime _lastActivity;
+    private const int IDLE_TIMEOUT_MINUTES = 6;
     
     public MainForm()
     {
         InitializeComponent();
         InitializeBackupTimer();
+        InitializeIdleTimer();
+        
+        // Track user activity
+        this.MouseMove += ResetIdleTimer;
+        this.KeyPress += (s, e) => ResetIdleTimer(s, EventArgs.Empty);
     }
     
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -66,6 +75,9 @@ public partial class MainForm : Form
             case Keys.Control | Keys.Shift | Keys.O:
                 MenuRestore_Click(this, EventArgs.Empty);
                 return true;
+            case Keys.Control | Keys.L:
+                LockApplication();
+                return true;
         }
         return base.ProcessCmdKey(ref msg, keyData);
     }
@@ -78,24 +90,72 @@ public partial class MainForm : Form
     
     private void MainForm_Load(object sender, EventArgs e)
     {
+        // Check for PIN setup or lock on startup
+        if (!Services.SecurityService.IsPinConfigured())
+        {
+            // First time - setup PIN
+            using var setupForm = new LockScreenForm(setupMode: true, parent: this);
+            if (setupForm.ShowDialog() != DialogResult.OK)
+            {
+                Application.Exit();
+                return;
+            }
+        }
+        else
+        {
+            // Lock on startup
+            if (!ShowLockScreen())
+            {
+                Application.Exit();
+                return;
+            }
+        }
+        
         LoadDashboard();
-        ApplyProfessionalStyling();
+        Utils.ModernTheme.ApplyToForm(this);
+        ResetIdleTimer(this, EventArgs.Empty);
     }
     
-    private void ApplyProfessionalStyling()
+    private void InitializeIdleTimer()
     {
-        // Apply semi-transparent white background to panels for readability
-        Color panelBg = Color.FromArgb(200, 255, 255, 255); // 78% white opacity - shows background nicely
+        _lastActivity = DateTime.Now;
+        _idleTimer = new System.Windows.Forms.Timer();
+        _idleTimer.Interval = 30000; // Check every 30 seconds
+        _idleTimer.Tick += (s, e) =>
+        {
+            TimeSpan idleTime = DateTime.Now - _lastActivity;
+            if (idleTime.TotalMinutes >= IDLE_TIMEOUT_MINUTES)
+            {
+                LockApplication();
+            }
+        };
+        _idleTimer.Start();
+    }
+    
+    private void ResetIdleTimer(object? sender, EventArgs e)
+    {
+        _lastActivity = DateTime.Now;
+    }
+    
+    private void LockApplication()
+    {
+        _idleTimer?.Stop();
         
-        groupToday.BackColor = panelBg;
-        groupMonth.BackColor = panelBg;
-        groupQuickActions.BackColor = panelBg;
-        groupRecent.BackColor = panelBg;
-        
-        // Ensure DataGridView has subtle transparent background
-        dgvRecent.BackgroundColor = Color.FromArgb(230, 255, 255, 255);
-        dgvRecent.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 255, 255);
-        dgvRecent.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(210, 245, 248, 252);
+        if (!ShowLockScreen())
+        {
+            Application.Exit();
+        }
+        else
+        {
+            ResetIdleTimer(this, EventArgs.Empty);
+            _idleTimer?.Start();
+        }
+    }
+    
+    private bool ShowLockScreen()
+    {
+        using var lockForm = new LockScreenForm(setupMode: false, parent: this);
+        return lockForm.ShowDialog(this) == DialogResult.OK;
     }
     
     private void InitializeBackupTimer()
@@ -129,6 +189,8 @@ public partial class MainForm : Form
         // Clean up timer
         _backupTimer?.Stop();
         _backupTimer?.Dispose();
+        _idleTimer?.Stop();
+        _idleTimer?.Dispose();
     }
     
     private void LoadDashboard()
@@ -331,6 +393,11 @@ public partial class MainForm : Form
         form.ShowDialog();
     }
     
+    private void MenuLock_Click(object sender, EventArgs e)
+    {
+        LockApplication();
+    }
+    
     private void MenuExportAllData_Click(object sender, EventArgs e)
     {
         using var dialog = new SaveFileDialog();
@@ -435,6 +502,23 @@ public partial class MainForm : Form
     private void MenuExit_Click(object sender, EventArgs e)
     {
         Application.Exit();
+    }
+    
+    private void MenuCheckForUpdates_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://github.com/NandanaMD/CrushEaseLedger/releases/latest",
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch
+        {
+            // Silent fail - no internet or browser unavailable
+        }
     }
     
     private void BtnShortcuts_Click(object sender, EventArgs e)

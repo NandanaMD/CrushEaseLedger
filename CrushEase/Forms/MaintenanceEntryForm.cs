@@ -89,6 +89,9 @@ public partial class MaintenanceEntryForm : Form
             this.Text = "Edit Maintenance";
             LoadMaintenanceForEdit();
         }
+        
+        // Apply modern theme
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadMaintenanceForEdit()

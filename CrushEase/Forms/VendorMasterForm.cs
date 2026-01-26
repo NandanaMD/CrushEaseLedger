@@ -62,6 +62,7 @@ public partial class VendorMasterForm : Form
     private void VendorMasterForm_Load(object sender, EventArgs e)
     {
         LoadVendors();
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadVendors()

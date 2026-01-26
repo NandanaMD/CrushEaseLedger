@@ -44,6 +44,7 @@ public partial class MaterialMasterForm : Form
     private void MaterialMasterForm_Load(object sender, EventArgs e)
     {
         LoadMaterials();
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadMaterials()

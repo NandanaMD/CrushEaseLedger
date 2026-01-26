@@ -104,6 +104,9 @@ public partial class SaleEntryForm : Form
             btnSaveAndNew.Visible = false;
             LoadSaleForEdit();
         }
+        
+        // Apply modern theme
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadSaleForEdit()

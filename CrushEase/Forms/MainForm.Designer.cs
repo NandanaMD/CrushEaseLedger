@@ -36,8 +36,11 @@ namespace CrushEase.Forms
             this.toolStripSeparator5 = new ToolStripSeparator();
             this.menuExportAllData = new ToolStripMenuItem();
             this.menuFile = new ToolStripMenuItem();
+            this.menuHelp = new ToolStripMenuItem();
+            this.menuCheckForUpdates = new ToolStripMenuItem();
             this.menuBackup = new ToolStripMenuItem();
             this.menuRestore = new ToolStripMenuItem();
+            this.menuLock = new ToolStripMenuItem();
             this.toolStripSeparator2 = new ToolStripSeparator();
             this.menuExit = new ToolStripMenuItem();
             
@@ -78,7 +81,8 @@ namespace CrushEase.Forms
                 this.menuFile,
                 this.menuMasters,
                 this.menuTransactions,
-                this.menuReports
+                this.menuReports,
+                this.menuHelp
             });
             this.menuStrip.Location = new Point(0, 0);
             this.menuStrip.Name = "menuStrip";
@@ -89,6 +93,7 @@ namespace CrushEase.Forms
             this.menuFile.DropDownItems.AddRange(new ToolStripItem[] {
                 this.menuBackup,
                 this.menuRestore,
+                this.menuLock,
                 this.toolStripSeparator2,
                 this.menuExit
             });
@@ -107,6 +112,12 @@ namespace CrushEase.Forms
             this.menuRestore.Text = "&Restore from Backup...";
             this.menuRestore.ShortcutKeys = Keys.Control | Keys.Shift | Keys.O;
             this.menuRestore.Click += new EventHandler(this.MenuRestore_Click);
+            
+            this.menuLock.Name = "menuLock";
+            this.menuLock.Size = new Size(180, 22);
+            this.menuLock.Text = "&Lock Application";
+            this.menuLock.ShortcutKeys = Keys.Control | Keys.L;
+            this.menuLock.Click += new EventHandler(this.MenuLock_Click);
             
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new Size(177, 6);
@@ -239,6 +250,19 @@ namespace CrushEase.Forms
             this.menuExportAllData.Text = "E&xport All Data to Excel...";
             this.menuExportAllData.ShortcutKeys = Keys.Control | Keys.E;
             this.menuExportAllData.Click += new EventHandler(this.MenuExportAllData_Click);
+            
+            // Help Menu
+            this.menuHelp.DropDownItems.AddRange(new ToolStripItem[] {
+                this.menuCheckForUpdates
+            });
+            this.menuHelp.Name = "menuHelp";
+            this.menuHelp.Size = new Size(44, 20);
+            this.menuHelp.Text = "&Help";
+            
+            this.menuCheckForUpdates.Name = "menuCheckForUpdates";
+            this.menuCheckForUpdates.Size = new Size(180, 22);
+            this.menuCheckForUpdates.Text = "&Download Installer";
+            this.menuCheckForUpdates.Click += new EventHandler(this.MenuCheckForUpdates_Click);
             
             // groupToday
             this.groupToday.Controls.Add(this.lblTodaySales);
@@ -418,19 +442,9 @@ namespace CrushEase.Forms
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.WindowState = FormWindowState.Maximized;
             this.Text = "CrushEase Ledger";
-            
-            // Set background image
-            try
-            {
-                string bgPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "bg.jpeg");
-                if (File.Exists(bgPath))
-                {
-                    this.BackgroundImage = Image.FromFile(bgPath);
-                    this.BackgroundImageLayout = ImageLayout.Stretch;
-                }
-            }
-            catch { }
+            this.BackColor = Color.FromArgb(245, 247, 250); // Soft gray background
             
             // Set icon
             try
@@ -463,6 +477,7 @@ namespace CrushEase.Forms
         private ToolStripMenuItem menuFile;
         private ToolStripMenuItem menuBackup;
         private ToolStripMenuItem menuRestore;
+        private ToolStripMenuItem menuLock;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem menuExit;
         private ToolStripMenuItem menuMasters;
@@ -502,5 +517,7 @@ namespace CrushEase.Forms
         private DataGridView dgvRecent;
         private StatusStrip statusStrip;
         private ToolStripStatusLabel lblStatus;
+        private ToolStripMenuItem menuHelp;
+        private ToolStripMenuItem menuCheckForUpdates;
     }
 }

@@ -16,6 +16,7 @@ public partial class MasterDataViewerForm : Form
     private void MasterDataViewerForm_Load(object sender, EventArgs e)
     {
         LoadAllData();
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadAllData()

@@ -33,6 +33,9 @@ public partial class SalesReportForm : Form
         
         // Enable double-click to edit
         dgvReport.CellDoubleClick += DgvReport_CellDoubleClick;
+        
+        // Apply modern theme
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadMasterData()

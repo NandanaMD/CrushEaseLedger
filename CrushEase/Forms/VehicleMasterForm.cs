@@ -44,6 +44,7 @@ public partial class VehicleMasterForm : Form
     private void VehicleMasterForm_Load(object sender, EventArgs e)
     {
         LoadVehicles();
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadVehicles()

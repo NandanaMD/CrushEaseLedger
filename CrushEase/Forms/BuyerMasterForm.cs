@@ -62,6 +62,7 @@ public partial class BuyerMasterForm : Form
     private void BuyerMasterForm_Load(object sender, EventArgs e)
     {
         LoadBuyers();
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadBuyers()

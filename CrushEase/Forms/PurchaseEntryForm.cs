@@ -104,6 +104,9 @@ public partial class PurchaseEntryForm : Form
             btnSaveAndNew.Visible = false;
             LoadPurchaseForEdit();
         }
+        
+        // Apply modern theme
+        Utils.ModernTheme.ApplyToForm(this);
     }
     
     private void LoadPurchaseForEdit()
