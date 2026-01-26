@@ -24,6 +24,8 @@ namespace CrushEase.Forms
             this.cmbVehicle = new ComboBox();
             this.lblMaterial = new Label();
             this.cmbMaterial = new ComboBox();
+            this.lblVendor = new Label();
+            this.cmbVendor = new ComboBox();
             this.btnGenerate = new Button();
             this.dgvReport = new DataGridView();
             this.lblTotal = new Label();
@@ -38,6 +40,8 @@ namespace CrushEase.Forms
             
             // groupFilters
             this.groupFilters.Controls.Add(this.btnGenerate);
+            this.groupFilters.Controls.Add(this.cmbVendor);
+            this.groupFilters.Controls.Add(this.lblVendor);
             this.groupFilters.Controls.Add(this.cmbMaterial);
             this.groupFilters.Controls.Add(this.lblMaterial);
             this.groupFilters.Controls.Add(this.cmbVehicle);
@@ -115,12 +119,28 @@ namespace CrushEase.Forms
             this.cmbMaterial.Size = new Size(180, 23);
             this.cmbMaterial.TabIndex = 7;
             
+            // lblVendor
+            this.lblVendor.AutoSize = true;
+            this.lblVendor.Location = new Point(300, 70);
+            this.lblVendor.Name = "lblVendor";
+            this.lblVendor.Size = new Size(49, 15);
+            this.lblVendor.TabIndex = 8;
+            this.lblVendor.Text = "Vendor:";
+            
+            // cmbVendor
+            this.cmbVendor.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.cmbVendor.FormattingEnabled = true;
+            this.cmbVendor.Location = new Point(360, 67);
+            this.cmbVendor.Name = "cmbVendor";
+            this.cmbVendor.Size = new Size(200, 23);
+            this.cmbVendor.TabIndex = 9;
+            
             // btnGenerate
             this.btnGenerate.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.btnGenerate.Location = new Point(820, 32);
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new Size(140, 58);
-            this.btnGenerate.TabIndex = 8;
+            this.btnGenerate.TabIndex = 10;
             this.btnGenerate.Text = "Generate Report";
             this.btnGenerate.UseVisualStyleBackColor = true;
             this.btnGenerate.Click += new EventHandler(this.BtnGenerate_Click);
@@ -219,6 +239,8 @@ namespace CrushEase.Forms
         private ComboBox cmbVehicle;
         private Label lblMaterial;
         private ComboBox cmbMaterial;
+        private Label lblVendor;
+        private ComboBox cmbVendor;
         private Button btnGenerate;
         private DataGridView dgvReport;
         private Label lblTotal;

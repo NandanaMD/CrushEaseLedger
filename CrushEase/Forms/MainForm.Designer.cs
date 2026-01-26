@@ -33,8 +33,6 @@ namespace CrushEase.Forms
             this.menuSalesReport = new ToolStripMenuItem();
             this.menuPurchaseReport = new ToolStripMenuItem();
             this.menuMaintenanceReport = new ToolStripMenuItem();
-            this.toolStripSeparator1 = new ToolStripSeparator();
-            this.menuVehicleProfitReport = new ToolStripMenuItem();
             this.toolStripSeparator5 = new ToolStripSeparator();
             this.menuExportAllData = new ToolStripMenuItem();
             this.menuFile = new ToolStripMenuItem();
@@ -208,8 +206,6 @@ namespace CrushEase.Forms
                 this.menuSalesReport,
                 this.menuPurchaseReport,
                 this.menuMaintenanceReport,
-                this.toolStripSeparator1,
-                this.menuVehicleProfitReport,
                 this.toolStripSeparator5,
                 this.menuExportAllData
             });
@@ -234,15 +230,6 @@ namespace CrushEase.Forms
             this.menuMaintenanceReport.Text = "&Maintenance Report";
             this.menuMaintenanceReport.ShortcutKeys = Keys.Control | Keys.M;
             this.menuMaintenanceReport.Click += new EventHandler(this.MenuMaintenanceReport_Click);
-            
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new Size(197, 6);
-            
-            this.menuVehicleProfitReport.Name = "menuVehicleProfitReport";
-            this.menuVehicleProfitReport.Size = new Size(200, 22);
-            this.menuVehicleProfitReport.Text = "&Vehicle Profit Summary";
-            this.menuVehicleProfitReport.ShortcutKeys = Keys.Control | Keys.P;
-            this.menuVehicleProfitReport.Click += new EventHandler(this.MenuVehicleProfitReport_Click);
             
             this.toolStripSeparator5.Name = "toolStripSeparator5";
             this.toolStripSeparator5.Size = new Size(197, 6);
@@ -432,6 +419,20 @@ namespace CrushEase.Forms
             this.Name = "MainForm";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Text = "CrushEase Ledger";
+            
+            // Set background image
+            try
+            {
+                string bgPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "bg.jpeg");
+                if (File.Exists(bgPath))
+                {
+                    this.BackgroundImage = Image.FromFile(bgPath);
+                    this.BackgroundImageLayout = ImageLayout.Stretch;
+                }
+            }
+            catch { }
+            
+            // Set icon
             try
             {
                 string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "mainlogo.ico");
@@ -481,8 +482,6 @@ namespace CrushEase.Forms
         private ToolStripMenuItem menuSalesReport;
         private ToolStripMenuItem menuPurchaseReport;
         private ToolStripMenuItem menuMaintenanceReport;
-        private ToolStripSeparator toolStripSeparator1;
-        private ToolStripMenuItem menuVehicleProfitReport;
         private ToolStripSeparator toolStripSeparator5;
         private ToolStripMenuItem menuExportAllData;
         private GroupBox groupToday;

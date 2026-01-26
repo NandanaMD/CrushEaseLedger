@@ -57,8 +57,14 @@ public partial class PurchaseReportForm : Form
             cmbMaterial.ValueMember = "MaterialId";
             cmbMaterial.SelectedIndex = 0;
             
-            // Load vendors for edit operations
-            _vendors = VendorRepository.GetAll(activeOnly: false);
+            // Load vendors
+            _vendors = VendorRepository.GetAll(activeOnly: true);
+            var vendorList = new List<Vendor> { new Vendor { VendorId = 0, VendorName = "All Vendors" } };
+            vendorList.AddRange(_vendors);
+            cmbVendor.DataSource = vendorList;
+            cmbVendor.DisplayMember = "VendorName";
+            cmbVendor.ValueMember = "VendorId";
+            cmbVendor.SelectedIndex = 0;
         }
         catch (Exception ex)
         {
@@ -99,6 +105,14 @@ public partial class PurchaseReportForm : Form
             {
                 materialId = mid;
                 _currentData = _currentData.Where(p => p.MaterialId == materialId).ToList();
+            }
+            
+            // Apply vendor filter if needed
+            int? vendorId = null;
+            if (cmbVendor.SelectedValue is int vndId && vndId > 0)
+            {
+                vendorId = vndId;
+                _currentData = _currentData.Where(p => p.VendorId == vendorId).ToList();
             }
             
             // Bind to grid

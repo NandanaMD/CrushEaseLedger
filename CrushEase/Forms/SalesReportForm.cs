@@ -57,8 +57,14 @@ public partial class SalesReportForm : Form
             cmbMaterial.ValueMember = "MaterialId";
             cmbMaterial.SelectedIndex = 0;
             
-            // Load buyers for edit operations
-            _buyers = BuyerRepository.GetAll(activeOnly: false);
+            // Load buyers
+            _buyers = BuyerRepository.GetAll(activeOnly: true);
+            var buyerList = new List<Buyer> { new Buyer { BuyerId = 0, BuyerName = "All Buyers" } };
+            buyerList.AddRange(_buyers);
+            cmbBuyer.DataSource = buyerList;
+            cmbBuyer.DisplayMember = "BuyerName";
+            cmbBuyer.ValueMember = "BuyerId";
+            cmbBuyer.SelectedIndex = 0;
         }
         catch (Exception ex)
         {
@@ -99,6 +105,14 @@ public partial class SalesReportForm : Form
             {
                 materialId = mid;
                 _currentData = _currentData.Where(s => s.MaterialId == materialId).ToList();
+            }
+            
+            // Apply buyer filter if needed
+            int? buyerId = null;
+            if (cmbBuyer.SelectedValue is int bid && bid > 0)
+            {
+                buyerId = bid;
+                _currentData = _currentData.Where(s => s.BuyerId == buyerId).ToList();
             }
             
             // Bind to grid

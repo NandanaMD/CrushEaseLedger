@@ -57,9 +57,6 @@ public partial class MainForm : Form
             case Keys.Control | Keys.M:
                 MenuMaintenanceReport_Click(this, EventArgs.Empty);
                 return true;
-            case Keys.Control | Keys.P:
-                MenuVehicleProfitReport_Click(this, EventArgs.Empty);
-                return true;
             case Keys.Control | Keys.E:
                 MenuExportAllData_Click(this, EventArgs.Empty);
                 return true;
@@ -82,6 +79,23 @@ public partial class MainForm : Form
     private void MainForm_Load(object sender, EventArgs e)
     {
         LoadDashboard();
+        ApplyProfessionalStyling();
+    }
+    
+    private void ApplyProfessionalStyling()
+    {
+        // Apply semi-transparent white background to panels for readability
+        Color panelBg = Color.FromArgb(200, 255, 255, 255); // 78% white opacity - shows background nicely
+        
+        groupToday.BackColor = panelBg;
+        groupMonth.BackColor = panelBg;
+        groupQuickActions.BackColor = panelBg;
+        groupRecent.BackColor = panelBg;
+        
+        // Ensure DataGridView has subtle transparent background
+        dgvRecent.BackgroundColor = Color.FromArgb(230, 255, 255, 255);
+        dgvRecent.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 255, 255);
+        dgvRecent.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(210, 245, 248, 252);
     }
     
     private void InitializeBackupTimer()
@@ -314,12 +328,6 @@ public partial class MainForm : Form
     private void MenuMaintenanceReport_Click(object sender, EventArgs e)
     {
         var form = new MaintenanceReportForm();
-        form.ShowDialog();
-    }
-    
-    private void MenuVehicleProfitReport_Click(object sender, EventArgs e)
-    {
-        var form = new VehicleProfitReportForm();
         form.ShowDialog();
     }
     
