@@ -85,7 +85,7 @@ namespace CrushEase.Forms
             this.MinimizeBox = false;
             this.Name = "ShortcutsHelpForm";
             this.StartPosition = FormStartPosition.CenterParent;
-            this.Text = "Keyboard Shortcuts - CrushEase";
+            this.Text = "Keyboard Shortcuts - CrushEase Ledger";
             this.ShowIcon = false;
             this.ResumeLayout(false);
         }

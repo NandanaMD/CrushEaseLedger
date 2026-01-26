@@ -9,11 +9,16 @@ public static class Logger
 {
     public static void Initialize()
     {
-        string logPath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Logs",
-            "crushease.log"
+        // Use user's AppData\Local folder for logs
+        string logFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "CrushEase Ledger",
+            "Logs"
         );
+        
+        Directory.CreateDirectory(logFolder);
+        
+        string logPath = Path.Combine(logFolder, "crushease.log");
         
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -57,14 +62,20 @@ public static class Logger
 /// </summary>
 public static class Config
 {
+    // Use user's AppData\Local folder instead of Program Files to avoid permission issues
+    private static string AppDataFolder => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "CrushEase Ledger"
+    );
+    
     public static string DatabasePath => Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory,
+        AppDataFolder,
         "Data",
         "crushease.db"
     );
     
     public static string BackupFolder => Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory,
+        AppDataFolder,
         "Backups"
     );
     

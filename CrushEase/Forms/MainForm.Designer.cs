@@ -431,10 +431,10 @@ namespace CrushEase.Forms
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "CrushEase Business Manager";
+            this.Text = "CrushEase Ledger";
             try
             {
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "favicon.ico");
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "mainlogo.ico");
                 if (File.Exists(iconPath))
                 {
                     this.Icon = new Icon(iconPath);

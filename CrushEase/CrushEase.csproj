@@ -11,7 +11,7 @@
     <Version>1.0.0</Version>
     <Authors>CrushEase Development</Authors>
     <Company>CrushEase</Company>
-    <ApplicationIcon>assets\favicon.ico</ApplicationIcon>
+    <ApplicationIcon>assets\mainlogo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\favicon.ico">
+    <Content Include="assets\mainlogo.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -18,6 +18,14 @@ bld/
 *.userosscache
 *.sln.docstates
 *.userprefs
+*.rsuser
+
+## Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 ## Build results
 [Dd]ebugPublic/
@@ -27,6 +35,9 @@ x64/
 x86/
 build/
 [Bb]uild[Ll]og.*
+*.pidb
+*.svclog
+*.scc
 
 ## Database and logs
 *.db
@@ -34,6 +45,7 @@ build/
 *.db-wal
 Logs/
 Backups/
+Data/*.db*
 
 ## NuGet
 *.nupkg
@@ -42,6 +54,17 @@ packages/
 !**/packages/build/
 *.nuget.props
 *.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+[Dd]ebugPS/
+[Rr]eleasePS/
 
 ## Rider
 .idea/
@@ -56,3 +79,28 @@ packages/
 *.tmp
 *.temp
 *.cache
+
+## Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+## Installer output
+installer/Output/
+*.exe
+*.msi
+
+## ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+## Backup folder
+bk/
