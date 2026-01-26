@@ -1,0 +1,257 @@
+namespace CrushEase.Forms
+{
+    partial class SaleEntryForm
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.lblSaleDate = new Label();
+            this.dtpSaleDate = new DateTimePicker();
+            this.lblVehicle = new Label();
+            this.cmbVehicle = new ComboBox();
+            this.lblBuyer = new Label();
+            this.cmbBuyer = new ComboBox();
+            this.btnAddBuyer = new Button();
+            this.lblMaterial = new Label();
+            this.cmbMaterial = new ComboBox();
+            this.lblQuantity = new Label();
+            this.txtQuantity = new TextBox();
+            this.lblRate = new Label();
+            this.txtRate = new TextBox();
+            this.lblAmount = new Label();
+            this.txtAmount = new TextBox();
+            this.btnSave = new Button();
+            this.btnSaveAndNew = new Button();
+            this.btnClose = new Button();
+            this.groupBox = new GroupBox();
+            
+            this.groupBox.SuspendLayout();
+            this.SuspendLayout();
+            
+            // groupBox
+            this.groupBox.Controls.Add(this.txtAmount);
+            this.groupBox.Controls.Add(this.lblAmount);
+            this.groupBox.Controls.Add(this.txtRate);
+            this.groupBox.Controls.Add(this.lblRate);
+            this.groupBox.Controls.Add(this.txtQuantity);
+            this.groupBox.Controls.Add(this.lblQuantity);
+            this.groupBox.Controls.Add(this.cmbMaterial);
+            this.groupBox.Controls.Add(this.lblMaterial);
+            this.groupBox.Controls.Add(this.btnAddBuyer);
+            this.groupBox.Controls.Add(this.cmbBuyer);
+            this.groupBox.Controls.Add(this.lblBuyer);
+            this.groupBox.Controls.Add(this.cmbVehicle);
+            this.groupBox.Controls.Add(this.lblVehicle);
+            this.groupBox.Controls.Add(this.dtpSaleDate);
+            this.groupBox.Controls.Add(this.lblSaleDate);
+            this.groupBox.Location = new Point(12, 12);
+            this.groupBox.Name = "groupBox";
+            this.groupBox.Size = new Size(560, 280);
+            this.groupBox.TabIndex = 0;
+            this.groupBox.TabStop = false;
+            this.groupBox.Text = "Sale Details";
+            
+            // lblSaleDate
+            this.lblSaleDate.AutoSize = true;
+            this.lblSaleDate.Location = new Point(20, 35);
+            this.lblSaleDate.Name = "lblSaleDate";
+            this.lblSaleDate.Size = new Size(60, 15);
+            this.lblSaleDate.TabIndex = 0;
+            this.lblSaleDate.Text = "Sale Date:";
+            
+            // dtpSaleDate
+            this.dtpSaleDate.Format = DateTimePickerFormat.Short;
+            this.dtpSaleDate.Location = new Point(130, 32);
+            this.dtpSaleDate.Name = "dtpSaleDate";
+            this.dtpSaleDate.Size = new Size(200, 23);
+            this.dtpSaleDate.TabIndex = 1;
+            
+            // lblVehicle
+            this.lblVehicle.AutoSize = true;
+            this.lblVehicle.Location = new Point(20, 70);
+            this.lblVehicle.Name = "lblVehicle";
+            this.lblVehicle.Size = new Size(50, 15);
+            this.lblVehicle.TabIndex = 2;
+            this.lblVehicle.Text = "Vehicle:";
+            
+            // cmbVehicle
+            this.cmbVehicle.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.cmbVehicle.FormattingEnabled = true;
+            this.cmbVehicle.Location = new Point(130, 67);
+            this.cmbVehicle.Name = "cmbVehicle";
+            this.cmbVehicle.Size = new Size(200, 23);
+            this.cmbVehicle.TabIndex = 3;
+            
+            // lblBuyer
+            this.lblBuyer.AutoSize = true;
+            this.lblBuyer.Location = new Point(20, 105);
+            this.lblBuyer.Name = "lblBuyer";
+            this.lblBuyer.Size = new Size(40, 15);
+            this.lblBuyer.TabIndex = 4;
+            this.lblBuyer.Text = "Buyer:";
+            
+            // cmbBuyer
+            this.cmbBuyer.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.cmbBuyer.FormattingEnabled = true;
+            this.cmbBuyer.Location = new Point(130, 102);
+            this.cmbBuyer.Name = "cmbBuyer";
+            this.cmbBuyer.Size = new Size(200, 23);
+            this.cmbBuyer.TabIndex = 5;
+            
+            // btnAddBuyer
+            this.btnAddBuyer.Location = new Point(340, 101);
+            this.btnAddBuyer.Name = "btnAddBuyer";
+            this.btnAddBuyer.Size = new Size(80, 25);
+            this.btnAddBuyer.TabIndex = 6;
+            this.btnAddBuyer.Text = "Add New";
+            this.btnAddBuyer.UseVisualStyleBackColor = true;
+            this.btnAddBuyer.Click += new EventHandler(this.BtnAddBuyer_Click);
+            
+            // lblMaterial
+            this.lblMaterial.AutoSize = true;
+            this.lblMaterial.Location = new Point(20, 140);
+            this.lblMaterial.Name = "lblMaterial";
+            this.lblMaterial.Size = new Size(55, 15);
+            this.lblMaterial.TabIndex = 7;
+            this.lblMaterial.Text = "Material:";
+            
+            // cmbMaterial
+            this.cmbMaterial.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.cmbMaterial.FormattingEnabled = true;
+            this.cmbMaterial.Location = new Point(130, 137);
+            this.cmbMaterial.Name = "cmbMaterial";
+            this.cmbMaterial.Size = new Size(200, 23);
+            this.cmbMaterial.TabIndex = 8;
+            
+            // lblQuantity
+            this.lblQuantity.AutoSize = true;
+            this.lblQuantity.Location = new Point(20, 175);
+            this.lblQuantity.Name = "lblQuantity";
+            this.lblQuantity.Size = new Size(56, 15);
+            this.lblQuantity.TabIndex = 9;
+            this.lblQuantity.Text = "Quantity:";
+            
+            // txtQuantity
+            this.txtQuantity.Location = new Point(130, 172);
+            this.txtQuantity.Name = "txtQuantity";
+            this.txtQuantity.Size = new Size(150, 23);
+            this.txtQuantity.TabIndex = 10;
+            this.txtQuantity.TextAlign = HorizontalAlignment.Right;
+            this.txtQuantity.TextChanged += new EventHandler(this.TxtQuantity_TextChanged);
+            
+            // lblRate
+            this.lblRate.AutoSize = true;
+            this.lblRate.Location = new Point(20, 210);
+            this.lblRate.Name = "lblRate";
+            this.lblRate.Size = new Size(33, 15);
+            this.lblRate.TabIndex = 11;
+            this.lblRate.Text = "Rate:";
+            
+            // txtRate
+            this.txtRate.Location = new Point(130, 207);
+            this.txtRate.Name = "txtRate";
+            this.txtRate.Size = new Size(150, 23);
+            this.txtRate.TabIndex = 12;
+            this.txtRate.TextAlign = HorizontalAlignment.Right;
+            this.txtRate.TextChanged += new EventHandler(this.TxtRate_TextChanged);
+            
+            // lblAmount
+            this.lblAmount.AutoSize = true;
+            this.lblAmount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            this.lblAmount.Location = new Point(20, 245);
+            this.lblAmount.Name = "lblAmount";
+            this.lblAmount.Size = new Size(57, 15);
+            this.lblAmount.TabIndex = 13;
+            this.lblAmount.Text = "Amount:";
+            
+            // txtAmount
+            this.txtAmount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            this.txtAmount.Location = new Point(130, 242);
+            this.txtAmount.Name = "txtAmount";
+            this.txtAmount.ReadOnly = true;
+            this.txtAmount.Size = new Size(150, 23);
+            this.txtAmount.TabIndex = 14;
+            this.txtAmount.TabStop = false;
+            this.txtAmount.Text = "0.00";
+            this.txtAmount.TextAlign = HorizontalAlignment.Right;
+            
+            // btnSave
+            this.btnSave.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            this.btnSave.Location = new Point(252, 305);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new Size(100, 35);
+            this.btnSave.TabIndex = 1;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new EventHandler(this.BtnSave_Click);
+            
+            // btnSaveAndNew
+            this.btnSaveAndNew.Location = new Point(362, 305);
+            this.btnSaveAndNew.Name = "btnSaveAndNew";
+            this.btnSaveAndNew.Size = new Size(110, 35);
+            this.btnSaveAndNew.TabIndex = 2;
+            this.btnSaveAndNew.Text = "Save && Add New";
+            this.btnSaveAndNew.UseVisualStyleBackColor = true;
+            this.btnSaveAndNew.Click += new EventHandler(this.BtnSaveAndNew_Click);
+            
+            // btnClose
+            this.btnClose.Location = new Point(482, 305);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new Size(90, 35);
+            this.btnClose.TabIndex = 3;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new EventHandler(this.BtnClose_Click);
+            
+            // SaleEntryForm
+            this.AutoScaleDimensions = new SizeF(7F, 15F);
+            this.AutoScaleMode = AutoScaleMode.Font;
+            this.ClientSize = new Size(584, 352);
+            this.Controls.Add(this.btnClose);
+            this.Controls.Add(this.btnSaveAndNew);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.groupBox);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "SaleEntryForm";
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.Text = "Add Sale";
+            this.Load += new EventHandler(this.SaleEntryForm_Load);
+            
+            this.groupBox.ResumeLayout(false);
+            this.groupBox.PerformLayout();
+            this.ResumeLayout(false);
+        }
+
+        private GroupBox groupBox;
+        private Label lblSaleDate;
+        private DateTimePicker dtpSaleDate;
+        private Label lblVehicle;
+        private ComboBox cmbVehicle;
+        private Label lblBuyer;
+        private ComboBox cmbBuyer;
+        private Button btnAddBuyer;
+        private Label lblMaterial;
+        private ComboBox cmbMaterial;
+        private Label lblQuantity;
+        private TextBox txtQuantity;
+        private Label lblRate;
+        private TextBox txtRate;
+        private Label lblAmount;
+        private TextBox txtAmount;
+        private Button btnSave;
+        private Button btnSaveAndNew;
+        private Button btnClose;
+    }
+}
