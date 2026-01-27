@@ -16,7 +16,9 @@ public static class SaleRepository
         connection.Open();
         
         string sql = @"
-            SELECT s.*, v.vehicle_no, b.buyer_name, m.material_name
+            SELECT s.sale_id, s.sale_date, s.vehicle_id, s.buyer_id, s.material_id, 
+                   s.quantity, s.rate, s.amount, s.created_at, s.input_unit, s.input_quantity, s.calculated_cft,
+                   v.vehicle_no, b.buyer_name, m.material_name
             FROM sales s
             INNER JOIN vehicles v ON s.vehicle_id = v.vehicle_id
             INNER JOIN buyers b ON s.buyer_id = b.buyer_id
@@ -55,9 +57,12 @@ public static class SaleRepository
                 Rate = Convert.ToDecimal(reader.GetValue(6)),
                 Amount = Convert.ToDecimal(reader.GetValue(7)),
                 CreatedAt = DateTime.Parse(reader.GetString(8)),
-                VehicleNo = reader.GetString(9),
-                BuyerName = reader.GetString(10),
-                MaterialName = reader.GetString(11)
+                InputUnit = reader.IsDBNull(9) ? "CFT" : reader.GetString(9),
+                InputQuantity = reader.IsDBNull(10) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(10)),
+                CalculatedCFT = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                VehicleNo = reader.GetString(12),
+                BuyerName = reader.GetString(13),
+                MaterialName = reader.GetString(14)
             });
         }
         
@@ -70,7 +75,9 @@ public static class SaleRepository
         connection.Open();
         
         string sql = @"
-            SELECT s.*, v.vehicle_no, b.buyer_name, m.material_name
+            SELECT s.sale_id, s.sale_date, s.vehicle_id, s.buyer_id, s.material_id, 
+                   s.quantity, s.rate, s.amount, s.created_at, s.input_unit, s.input_quantity, s.calculated_cft,
+                   v.vehicle_no, b.buyer_name, m.material_name
             FROM sales s
             INNER JOIN vehicles v ON s.vehicle_id = v.vehicle_id
             INNER JOIN buyers b ON s.buyer_id = b.buyer_id
@@ -94,9 +101,12 @@ public static class SaleRepository
                 Rate = Convert.ToDecimal(reader.GetValue(6)),
                 Amount = Convert.ToDecimal(reader.GetValue(7)),
                 CreatedAt = DateTime.Parse(reader.GetString(8)),
-                VehicleNo = reader.GetString(9),
-                BuyerName = reader.GetString(10),
-                MaterialName = reader.GetString(11)
+                InputUnit = reader.IsDBNull(9) ? "CFT" : reader.GetString(9),
+                InputQuantity = reader.IsDBNull(10) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(10)),
+                CalculatedCFT = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                VehicleNo = reader.GetString(12),
+                BuyerName = reader.GetString(13),
+                MaterialName = reader.GetString(14)
             };
         }
         
@@ -106,8 +116,8 @@ public static class SaleRepository
     public static int Insert(Sale sale)
     {
         string sql = @"
-            INSERT INTO sales (sale_date, vehicle_id, buyer_id, material_id, quantity, rate, amount)
-            VALUES (@date, @vehicleId, @buyerId, @materialId, @quantity, @rate, @amount);
+            INSERT INTO sales (sale_date, vehicle_id, buyer_id, material_id, quantity, rate, amount, input_unit, input_quantity, calculated_cft)
+            VALUES (@date, @vehicleId, @buyerId, @materialId, @quantity, @rate, @amount, @inputUnit, @inputQuantity, @calculatedCFT);
             SELECT last_insert_rowid();";
         
         int result = DatabaseManager.ExecuteScalar<int>(sql,
@@ -117,7 +127,10 @@ public static class SaleRepository
             new SQLiteParameter("@materialId", sale.MaterialId),
             new SQLiteParameter("@quantity", sale.Quantity),
             new SQLiteParameter("@rate", sale.Rate),
-            new SQLiteParameter("@amount", sale.Amount));
+            new SQLiteParameter("@amount", sale.Amount),
+            new SQLiteParameter("@inputUnit", sale.InputUnit),
+            new SQLiteParameter("@inputQuantity", sale.InputQuantity),
+            new SQLiteParameter("@calculatedCFT", sale.CalculatedCFT));
         
         Services.BackupService.BackupAfterTransaction();
         return result;
@@ -133,7 +146,10 @@ public static class SaleRepository
                 material_id = @materialId, 
                 quantity = @quantity, 
                 rate = @rate, 
-                amount = @amount
+                amount = @amount,
+                input_unit = @inputUnit,
+                input_quantity = @inputQuantity,
+                calculated_cft = @calculatedCFT
             WHERE sale_id = @id";
         
         DatabaseManager.ExecuteNonQuery(sql,
@@ -144,6 +160,9 @@ public static class SaleRepository
             new SQLiteParameter("@quantity", sale.Quantity),
             new SQLiteParameter("@rate", sale.Rate),
             new SQLiteParameter("@amount", sale.Amount),
+            new SQLiteParameter("@inputUnit", sale.InputUnit),
+            new SQLiteParameter("@inputQuantity", sale.InputQuantity),
+            new SQLiteParameter("@calculatedCFT", sale.CalculatedCFT),
             new SQLiteParameter("@id", sale.SaleId));
         
         Services.BackupService.BackupAfterTransaction();
@@ -184,7 +203,9 @@ public static class PurchaseRepository
         connection.Open();
         
         string sql = @"
-            SELECT p.*, v.vehicle_no, vd.vendor_name, m.material_name
+            SELECT p.purchase_id, p.purchase_date, p.vehicle_id, p.vendor_id, p.material_id, 
+                   p.quantity, p.rate, p.amount, p.vendor_site, p.created_at, p.input_unit, p.input_quantity, p.calculated_cft,
+                   v.vehicle_no, vd.vendor_name, m.material_name
             FROM purchases p
             INNER JOIN vehicles v ON p.vehicle_id = v.vehicle_id
             INNER JOIN vendors vd ON p.vendor_id = vd.vendor_id
@@ -224,9 +245,12 @@ public static class PurchaseRepository
                 Amount = Convert.ToDecimal(reader.GetValue(7)),
                 VendorSite = reader.IsDBNull(8) ? null : reader.GetString(8),
                 CreatedAt = DateTime.Parse(reader.GetString(9)),
-                VehicleNo = reader.GetString(10),
-                VendorName = reader.GetString(11),
-                MaterialName = reader.GetString(12)
+                InputUnit = reader.IsDBNull(10) ? "CFT" : reader.GetString(10),
+                InputQuantity = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                CalculatedCFT = reader.IsDBNull(12) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(12)),
+                VehicleNo = reader.GetString(13),
+                VendorName = reader.GetString(14),
+                MaterialName = reader.GetString(15)
             });
         }
         
@@ -239,7 +263,9 @@ public static class PurchaseRepository
         connection.Open();
         
         string sql = @"
-            SELECT p.*, v.vehicle_no, vd.vendor_name, m.material_name
+            SELECT p.purchase_id, p.purchase_date, p.vehicle_id, p.vendor_id, p.material_id, 
+                   p.quantity, p.rate, p.amount, p.vendor_site, p.created_at, p.input_unit, p.input_quantity, p.calculated_cft,
+                   v.vehicle_no, vd.vendor_name, m.material_name
             FROM purchases p
             INNER JOIN vehicles v ON p.vehicle_id = v.vehicle_id
             INNER JOIN vendors vd ON p.vendor_id = vd.vendor_id
@@ -264,9 +290,12 @@ public static class PurchaseRepository
                 Amount = Convert.ToDecimal(reader.GetValue(7)),
                 VendorSite = reader.IsDBNull(8) ? null : reader.GetString(8),
                 CreatedAt = DateTime.Parse(reader.GetString(9)),
-                VehicleNo = reader.GetString(10),
-                VendorName = reader.GetString(11),
-                MaterialName = reader.GetString(12)
+                InputUnit = reader.IsDBNull(10) ? "CFT" : reader.GetString(10),
+                InputQuantity = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                CalculatedCFT = reader.IsDBNull(12) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(12)),
+                VehicleNo = reader.GetString(13),
+                VendorName = reader.GetString(14),
+                MaterialName = reader.GetString(15)
             };
         }
         
@@ -276,8 +305,8 @@ public static class PurchaseRepository
     public static int Insert(Purchase purchase)
     {
         string sql = @"
-            INSERT INTO purchases (purchase_date, vehicle_id, vendor_id, material_id, quantity, rate, amount, vendor_site)
-            VALUES (@date, @vehicleId, @vendorId, @materialId, @quantity, @rate, @amount, @vendorSite);
+            INSERT INTO purchases (purchase_date, vehicle_id, vendor_id, material_id, quantity, rate, amount, vendor_site, input_unit, input_quantity, calculated_cft)
+            VALUES (@date, @vehicleId, @vendorId, @materialId, @quantity, @rate, @amount, @vendorSite, @inputUnit, @inputQuantity, @calculatedCFT);
             SELECT last_insert_rowid();";
         
         int result = DatabaseManager.ExecuteScalar<int>(sql,
@@ -288,7 +317,10 @@ public static class PurchaseRepository
             new SQLiteParameter("@quantity", purchase.Quantity),
             new SQLiteParameter("@rate", purchase.Rate),
             new SQLiteParameter("@amount", purchase.Amount),
-            new SQLiteParameter("@vendorSite", (object?)purchase.VendorSite ?? DBNull.Value));
+            new SQLiteParameter("@vendorSite", (object?)purchase.VendorSite ?? DBNull.Value),
+            new SQLiteParameter("@inputUnit", purchase.InputUnit),
+            new SQLiteParameter("@inputQuantity", purchase.InputQuantity),
+            new SQLiteParameter("@calculatedCFT", purchase.CalculatedCFT));
         
         Services.BackupService.BackupAfterTransaction();
         return result;
@@ -305,7 +337,10 @@ public static class PurchaseRepository
                 quantity = @quantity, 
                 rate = @rate, 
                 amount = @amount,
-                vendor_site = @vendorSite
+                vendor_site = @vendorSite,
+                input_unit = @inputUnit,
+                input_quantity = @inputQuantity,
+                calculated_cft = @calculatedCFT
             WHERE purchase_id = @id";
         
         DatabaseManager.ExecuteNonQuery(sql,
@@ -317,6 +352,9 @@ public static class PurchaseRepository
             new SQLiteParameter("@rate", purchase.Rate),
             new SQLiteParameter("@amount", purchase.Amount),
             new SQLiteParameter("@vendorSite", (object?)purchase.VendorSite ?? DBNull.Value),
+            new SQLiteParameter("@inputUnit", purchase.InputUnit),
+            new SQLiteParameter("@inputQuantity", purchase.InputQuantity),
+            new SQLiteParameter("@calculatedCFT", purchase.CalculatedCFT),
             new SQLiteParameter("@id", purchase.PurchaseId));
         
         Services.BackupService.BackupAfterTransaction();

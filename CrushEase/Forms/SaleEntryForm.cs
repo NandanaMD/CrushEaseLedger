@@ -10,6 +10,7 @@ public partial class SaleEntryForm : Form
     private List<Buyer> _buyers;
     private List<Material> _materials;
     private int? _editSaleId;
+    private Material? _selectedMaterial;
     
     public SaleEntryForm()
     {
@@ -70,6 +71,7 @@ public partial class SaleEntryForm : Form
             cmbVehicle,
             cmbBuyer,
             cmbMaterial,
+            cmbUnit,
             txtQuantity,
             txtRate,
             txtAmount
@@ -96,6 +98,13 @@ public partial class SaleEntryForm : Form
     private void SaleEntryForm_Load(object sender, EventArgs e)
     {
         dtpSaleDate.Value = DateTime.Today;
+        
+        // Initialize Unit ComboBox
+        cmbUnit.Items.Clear();
+        cmbUnit.Items.Add("CFT");
+        cmbUnit.Items.Add("MT");
+        cmbUnit.SelectedIndex = 0; // Default to CFT
+        
         LoadMasterData();
         
         if (_editSaleId.HasValue)
@@ -120,7 +129,18 @@ public partial class SaleEntryForm : Form
             cmbVehicle.SelectedValue = sale.VehicleId;
             cmbBuyer.SelectedValue = sale.BuyerId;
             cmbMaterial.SelectedValue = sale.MaterialId;
-            txtQuantity.Text = sale.Quantity.ToString("N2");
+            
+            // Load unit and quantity based on InputUnit
+            cmbUnit.SelectedItem = sale.InputUnit;
+            txtQuantity.Text = sale.InputQuantity.ToString("N2");
+            
+            if (sale.InputUnit == "MT")
+            {
+                txtCalculatedCFT.Text = sale.CalculatedCFT.ToString("N2");
+                txtCalculatedCFT.Visible = true;
+                lblCalculatedCFT.Visible = true;
+            }
+            
             txtRate.Text = sale.Rate.ToString("N2");
             txtAmount.Text = sale.Amount.ToString("N2");
         }
@@ -150,6 +170,10 @@ public partial class SaleEntryForm : Form
             cmbMaterial.DisplayMember = "MaterialName";
             cmbMaterial.ValueMember = "MaterialId";
             cmbMaterial.SelectedIndex = -1;
+            
+            // Hide calculated CFT by default
+            lblCalculatedCFT.Visible = false;
+            txtCalculatedCFT.Visible = false;
         }
         catch (Exception ex)
         {
@@ -158,9 +182,54 @@ public partial class SaleEntryForm : Form
         }
     }
     
+    private void CmbMaterial_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (cmbMaterial.SelectedIndex >= 0)
+        {
+            _selectedMaterial = (Material)cmbMaterial.SelectedItem;
+            UpdateCalculatedCFT();
+        }
+    }
+    
+    private void CmbUnit_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        bool isMT = cmbUnit.SelectedItem?.ToString() == "MT";
+        lblCalculatedCFT.Visible = isMT;
+        txtCalculatedCFT.Visible = isMT;
+        
+        if (isMT)
+        {
+            lblQuantity.Text = "Quantity (MT):";
+        }
+        else
+        {
+            lblQuantity.Text = "Quantity (CFT):";
+        }
+        
+        UpdateCalculatedCFT();
+        CalculateAmount();
+    }
+    
     private void TxtQuantity_TextChanged(object sender, EventArgs e)
     {
+        UpdateCalculatedCFT();
         CalculateAmount();
+    }
+    
+    private void UpdateCalculatedCFT()
+    {
+        if (cmbUnit.SelectedItem?.ToString() == "MT" && 
+            _selectedMaterial != null &&
+            decimal.TryParse(txtQuantity.Text, out var quantityMT))
+        {
+            // ConversionFactor represents MT per CFT (density), so divide to get CFT
+            var calculatedCFT = quantityMT / _selectedMaterial.ConversionFactor_MT_to_CFT;
+            txtCalculatedCFT.Text = calculatedCFT.ToString("N2");
+        }
+        else if (cmbUnit.SelectedItem?.ToString() == "MT")
+        {
+            txtCalculatedCFT.Text = "0.00";
+        }
     }
     
     private void TxtRate_TextChanged(object sender, EventArgs e)
@@ -170,10 +239,29 @@ public partial class SaleEntryForm : Form
     
     private void CalculateAmount()
     {
-        if (decimal.TryParse(txtQuantity.Text, out var quantity) && 
-            decimal.TryParse(txtRate.Text, out var rate))
+        // Determine the effective CFT quantity for amount calculation
+        decimal effectiveCFT = 0;
+        
+        if (cmbUnit.SelectedItem?.ToString() == "MT")
         {
-            txtAmount.Text = (quantity * rate).ToString("N2");
+            // For MT, use calculated CFT
+            if (decimal.TryParse(txtCalculatedCFT.Text, out var cft))
+            {
+                effectiveCFT = cft;
+            }
+        }
+        else
+        {
+            // For CFT, use entered quantity directly
+            if (decimal.TryParse(txtQuantity.Text, out var quantity))
+            {
+                effectiveCFT = quantity;
+            }
+        }
+        
+        if (effectiveCFT > 0 && decimal.TryParse(txtRate.Text, out var rate))
+        {
+            txtAmount.Text = (effectiveCFT * rate).ToString("N2");
         }
         else
         {
@@ -205,15 +293,31 @@ public partial class SaleEntryForm : Form
         
         try
         {
+            var inputUnit = cmbUnit.SelectedItem?.ToString() ?? "CFT";
+            var inputQuantity = decimal.Parse(txtQuantity.Text);
+            decimal calculatedCFT;
+            
+            if (inputUnit == "MT")
+            {
+                calculatedCFT = decimal.Parse(txtCalculatedCFT.Text);
+            }
+            else
+            {
+                calculatedCFT = inputQuantity;
+            }
+            
             var sale = new Sale
             {
                 SaleDate = dtpSaleDate.Value.Date,
                 VehicleId = (int)cmbVehicle.SelectedValue,
                 BuyerId = (int)cmbBuyer.SelectedValue,
                 MaterialId = (int)cmbMaterial.SelectedValue,
-                Quantity = decimal.Parse(txtQuantity.Text),
+                Quantity = calculatedCFT, // Store CFT in Quantity for backward compatibility
                 Rate = decimal.Parse(txtRate.Text),
-                Amount = decimal.Parse(txtAmount.Text)
+                Amount = decimal.Parse(txtAmount.Text),
+                InputUnit = inputUnit,
+                InputQuantity = inputQuantity,
+                CalculatedCFT = calculatedCFT
             };
             
             if (_editSaleId.HasValue)
@@ -244,15 +348,31 @@ public partial class SaleEntryForm : Form
         
         try
         {
+            var inputUnit = cmbUnit.SelectedItem?.ToString() ?? "CFT";
+            var inputQuantity = decimal.Parse(txtQuantity.Text);
+            decimal calculatedCFT;
+            
+            if (inputUnit == "MT")
+            {
+                calculatedCFT = decimal.Parse(txtCalculatedCFT.Text);
+            }
+            else
+            {
+                calculatedCFT = inputQuantity;
+            }
+            
             var sale = new Sale
             {
                 SaleDate = dtpSaleDate.Value.Date,
                 VehicleId = (int)cmbVehicle.SelectedValue,
                 BuyerId = (int)cmbBuyer.SelectedValue,
                 MaterialId = (int)cmbMaterial.SelectedValue,
-                Quantity = decimal.Parse(txtQuantity.Text),
+                Quantity = calculatedCFT, // Store CFT in Quantity for backward compatibility
                 Rate = decimal.Parse(txtRate.Text),
-                Amount = decimal.Parse(txtAmount.Text)
+                Amount = decimal.Parse(txtAmount.Text),
+                InputUnit = inputUnit,
+                InputQuantity = inputQuantity,
+                CalculatedCFT = calculatedCFT
             };
             
             SaleRepository.Insert(sale);
@@ -315,9 +435,13 @@ public partial class SaleEntryForm : Form
         cmbVehicle.SelectedIndex = -1;
         cmbBuyer.SelectedIndex = -1;
         cmbMaterial.SelectedIndex = -1;
+        cmbUnit.SelectedIndex = 0; // Reset to CFT
         txtQuantity.Text = "";
+        txtCalculatedCFT.Text = "0.00";
         txtRate.Text = "";
         txtAmount.Text = "0.00";
+        lblCalculatedCFT.Visible = false;
+        txtCalculatedCFT.Visible = false;
         cmbVehicle.Focus();
     }
     

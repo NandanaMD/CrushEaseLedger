@@ -30,6 +30,9 @@ public partial class TransactionViewerForm : Form
         // Load all transaction data
         LoadAllData();
         
+        // Initialize invoice context menus
+        InitializeInvoiceContextMenus();
+        
         // Apply modern theme
         Utils.ModernTheme.ApplyToForm(this);
     }
@@ -127,9 +130,27 @@ public partial class TransactionViewerForm : Form
             if (col != null) col.HeaderText = "Material";
             
             col = dgvSales.Columns["Quantity"];
+            if (col != null) col.Visible = false; // Hide old Quantity
+            
+            col = dgvSales.Columns["InputUnit"];
             if (col != null)
             {
-                col.HeaderText = "Quantity";
+                col.HeaderText = "Unit";
+                col.Width = 50;
+            }
+            
+            col = dgvSales.Columns["InputQuantity"];
+            if (col != null)
+            {
+                col.HeaderText = "Qty";
+                col.DefaultCellStyle.Format = "N2";
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            
+            col = dgvSales.Columns["CalculatedCFT"];
+            if (col != null)
+            {
+                col.HeaderText = "CFT";
                 col.DefaultCellStyle.Format = "N2";
                 col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
@@ -203,9 +224,27 @@ public partial class TransactionViewerForm : Form
             if (col != null) col.HeaderText = "Site";
             
             col = dgvPurchases.Columns["Quantity"];
+            if (col != null) col.Visible = false; // Hide old Quantity
+            
+            col = dgvPurchases.Columns["InputUnit"];
             if (col != null)
             {
-                col.HeaderText = "Quantity";
+                col.HeaderText = "Unit";
+                col.Width = 50;
+            }
+            
+            col = dgvPurchases.Columns["InputQuantity"];
+            if (col != null)
+            {
+                col.HeaderText = "Qty";
+                col.DefaultCellStyle.Format = "N2";
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            
+            col = dgvPurchases.Columns["CalculatedCFT"];
+            if (col != null)
+            {
+                col.HeaderText = "CFT";
                 col.DefaultCellStyle.Format = "N2";
                 col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
@@ -496,4 +535,94 @@ public partial class TransactionViewerForm : Form
     {
         this.Close();
     }
+    
+    // Invoice generation methods
+    private void GenerateSaleInvoice()
+    {
+        if (dgvSales.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a sale transaction.", "No Selection", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var selectedSale = dgvSales.SelectedRows[0].DataBoundItem as Sale;
+        if (selectedSale == null) return;
+        
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var result = Services.InvoiceGenerator.GenerateSaleInvoice(selectedSale);
+            
+            if (result.Success)
+            {
+                var previewForm = new InvoicePreviewForm(result);
+                previewForm.ShowDialog(this);
+            }
+            else
+            {
+                MessageBox.Show(result.ErrorMessage, "Invoice Generation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+    
+    private void GeneratePurchaseInvoice()
+    {
+        if (dgvPurchases.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a purchase transaction.", "No Selection", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var selectedPurchase = dgvPurchases.SelectedRows[0].DataBoundItem as Purchase;
+        if (selectedPurchase == null) return;
+        
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var result = Services.InvoiceGenerator.GeneratePurchaseInvoice(selectedPurchase);
+            
+            if (result.Success)
+            {
+                var previewForm = new InvoicePreviewForm(result);
+                previewForm.ShowDialog(this);
+            }
+            else
+            {
+                MessageBox.Show(result.ErrorMessage, "Invoice Generation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+    
+    // Add context menus for invoice generation
+    private void InitializeInvoiceContextMenus()
+    {
+        // Sales context menu
+        var salesContextMenu = new ContextMenuStrip();
+        salesContextMenu.Items.Add("Generate Invoice", null, (s, e) => GenerateSaleInvoice());
+        salesContextMenu.Items.Add("-"); // Separator
+        salesContextMenu.Items.Add("Edit", null, (s, e) => BtnEditSale_Click(s, e));
+        salesContextMenu.Items.Add("Delete", null, (s, e) => BtnDeleteSale_Click(s, e));
+        dgvSales.ContextMenuStrip = salesContextMenu;
+        
+        // Purchases context menu
+        var purchasesContextMenu = new ContextMenuStrip();
+        purchasesContextMenu.Items.Add("Generate Invoice", null, (s, e) => GeneratePurchaseInvoice());
+        purchasesContextMenu.Items.Add("-"); // Separator
+        purchasesContextMenu.Items.Add("Edit", null, (s, e) => BtnEditPurchase_Click(s, e));
+        purchasesContextMenu.Items.Add("Delete", null, (s, e) => BtnDeletePurchase_Click(s, e));
+        dgvPurchases.ContextMenuStrip = purchasesContextMenu;
+    }
 }
+

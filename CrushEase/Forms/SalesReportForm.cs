@@ -34,6 +34,9 @@ public partial class SalesReportForm : Form
         // Enable double-click to edit
         dgvReport.CellDoubleClick += DgvReport_CellDoubleClick;
         
+        // Initialize invoice context menu
+        InitializeInvoiceContextMenu();
+        
         // Apply modern theme
         Utils.ModernTheme.ApplyToForm(this);
     }
@@ -130,17 +133,27 @@ public partial class SalesReportForm : Form
                 dgvReport.Columns["BuyerId"].Visible = false;
                 dgvReport.Columns["MaterialId"].Visible = false;
                 dgvReport.Columns["CreatedAt"].Visible = false;
+                dgvReport.Columns["Quantity"].Visible = false; // Hide old Quantity, show new fields instead
                 
                 dgvReport.Columns["SaleDate"].HeaderText = "Date";
                 dgvReport.Columns["SaleDate"].DefaultCellStyle.Format = "dd-MMM-yyyy";
                 dgvReport.Columns["VehicleNo"].HeaderText = "Vehicle";
                 dgvReport.Columns["BuyerName"].HeaderText = "Buyer";
                 dgvReport.Columns["MaterialName"].HeaderText = "Material";
-                dgvReport.Columns["Quantity"].DefaultCellStyle.Format = "N2";
+                
+                // Display new MT/CFT fields
+                dgvReport.Columns["InputUnit"].HeaderText = "Unit";
+                dgvReport.Columns["InputUnit"].Width = 50;
+                dgvReport.Columns["InputQuantity"].HeaderText = "Qty";
+                dgvReport.Columns["InputQuantity"].DefaultCellStyle.Format = "N2";
+                dgvReport.Columns["InputQuantity"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvReport.Columns["CalculatedCFT"].HeaderText = "CFT";
+                dgvReport.Columns["CalculatedCFT"].DefaultCellStyle.Format = "N2";
+                dgvReport.Columns["CalculatedCFT"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                
                 dgvReport.Columns["Rate"].DefaultCellStyle.Format = "N2";
                 dgvReport.Columns["Amount"].DefaultCellStyle.Format = "N2";
                 
-                dgvReport.Columns["Quantity"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 dgvReport.Columns["Rate"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 dgvReport.Columns["Amount"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
@@ -283,6 +296,52 @@ public partial class SalesReportForm : Form
             Logger.LogError(ex, "Failed to delete sale");
             MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+    
+    // Invoice generation functionality
+    private void GenerateInvoiceForSelectedSale()
+    {
+        if (dgvReport.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a sale transaction.", "No Selection", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var selectedSale = dgvReport.SelectedRows[0].DataBoundItem as Sale;
+        if (selectedSale == null) return;
+        
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var result = Services.InvoiceGenerator.GenerateSaleInvoice(selectedSale);
+            
+            if (result.Success)
+            {
+                var previewForm = new InvoicePreviewForm(result);
+                previewForm.ShowDialog(this);
+            }
+            else
+            {
+                MessageBox.Show(result.ErrorMessage, "Invoice Generation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+    
+    // Add context menu for invoice generation
+    private void InitializeInvoiceContextMenu()
+    {
+        var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Generate Invoice", null, (s, e) => GenerateInvoiceForSelectedSale());
+        contextMenu.Items.Add("-"); // Separator
+        contextMenu.Items.Add("Edit", null, (s, e) => BtnEdit_Click(s, e));
+        contextMenu.Items.Add("Delete", null, (s, e) => BtnDelete_Click(s, e));
+        dgvReport.ContextMenuStrip = contextMenu;
     }
 }
 

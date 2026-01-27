@@ -24,8 +24,12 @@ namespace CrushEase.Forms
             this.btnAddBuyer = new Button();
             this.lblMaterial = new Label();
             this.cmbMaterial = new ComboBox();
+            this.lblUnit = new Label();
+            this.cmbUnit = new ComboBox();
             this.lblQuantity = new Label();
             this.txtQuantity = new TextBox();
+            this.lblCalculatedCFT = new Label();
+            this.txtCalculatedCFT = new TextBox();
             this.lblRate = new Label();
             this.txtRate = new TextBox();
             this.lblAmount = new Label();
@@ -43,8 +47,12 @@ namespace CrushEase.Forms
             this.groupBox.Controls.Add(this.lblAmount);
             this.groupBox.Controls.Add(this.txtRate);
             this.groupBox.Controls.Add(this.lblRate);
+            this.groupBox.Controls.Add(this.txtCalculatedCFT);
+            this.groupBox.Controls.Add(this.lblCalculatedCFT);
             this.groupBox.Controls.Add(this.txtQuantity);
             this.groupBox.Controls.Add(this.lblQuantity);
+            this.groupBox.Controls.Add(this.cmbUnit);
+            this.groupBox.Controls.Add(this.lblUnit);
             this.groupBox.Controls.Add(this.cmbMaterial);
             this.groupBox.Controls.Add(this.lblMaterial);
             this.groupBox.Controls.Add(this.btnAddBuyer);
@@ -56,7 +64,7 @@ namespace CrushEase.Forms
             this.groupBox.Controls.Add(this.lblSaleDate);
             this.groupBox.Location = new Point(12, 12);
             this.groupBox.Name = "groupBox";
-            this.groupBox.Size = new Size(560, 280);
+            this.groupBox.Size = new Size(560, 340);
             this.groupBox.TabIndex = 0;
             this.groupBox.TabStop = false;
             this.groupBox.Text = "Sale Details";
@@ -132,62 +140,102 @@ namespace CrushEase.Forms
             this.cmbMaterial.Name = "cmbMaterial";
             this.cmbMaterial.Size = new Size(200, 23);
             this.cmbMaterial.TabIndex = 8;
+            this.cmbMaterial.SelectedIndexChanged += new EventHandler(this.CmbMaterial_SelectedIndexChanged);
+            
+            // lblUnit
+            this.lblUnit.AutoSize = true;
+            this.lblUnit.Location = new Point(20, 175);
+            this.lblUnit.Name = "lblUnit";
+            this.lblUnit.Size = new Size(32, 15);
+            this.lblUnit.TabIndex = 9;
+            this.lblUnit.Text = "Unit:";
+            
+            // cmbUnit
+            this.cmbUnit.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.cmbUnit.FormattingEnabled = true;
+            this.cmbUnit.Location = new Point(130, 172);
+            this.cmbUnit.Name = "cmbUnit";
+            this.cmbUnit.Size = new Size(100, 23);
+            this.cmbUnit.TabIndex = 10;
+            this.cmbUnit.SelectedIndexChanged += new EventHandler(this.CmbUnit_SelectedIndexChanged);
             
             // lblQuantity
             this.lblQuantity.AutoSize = true;
-            this.lblQuantity.Location = new Point(20, 175);
+            this.lblQuantity.Location = new Point(20, 210);
             this.lblQuantity.Name = "lblQuantity";
-            this.lblQuantity.Size = new Size(56, 15);
-            this.lblQuantity.TabIndex = 9;
-            this.lblQuantity.Text = "Quantity:";
+            this.lblQuantity.Size = new Size(85, 15);
+            this.lblQuantity.TabIndex = 11;
+            this.lblQuantity.Text = "Quantity (CFT):";
             
             // txtQuantity
-            this.txtQuantity.Location = new Point(130, 172);
+            this.txtQuantity.Location = new Point(130, 207);
             this.txtQuantity.Name = "txtQuantity";
             this.txtQuantity.Size = new Size(150, 23);
-            this.txtQuantity.TabIndex = 10;
+            this.txtQuantity.TabIndex = 12;
             this.txtQuantity.TextAlign = HorizontalAlignment.Right;
             this.txtQuantity.TextChanged += new EventHandler(this.TxtQuantity_TextChanged);
             
+            // lblCalculatedCFT
+            this.lblCalculatedCFT.AutoSize = true;
+            this.lblCalculatedCFT.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
+            this.lblCalculatedCFT.Location = new Point(295, 210);
+            this.lblCalculatedCFT.Name = "lblCalculatedCFT";
+            this.lblCalculatedCFT.Size = new Size(65, 15);
+            this.lblCalculatedCFT.TabIndex = 13;
+            this.lblCalculatedCFT.Text = "= CFT:";
+            this.lblCalculatedCFT.Visible = false;
+            
+            // txtCalculatedCFT
+            this.txtCalculatedCFT.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
+            this.txtCalculatedCFT.Location = new Point(370, 207);
+            this.txtCalculatedCFT.Name = "txtCalculatedCFT";
+            this.txtCalculatedCFT.ReadOnly = true;
+            this.txtCalculatedCFT.Size = new Size(120, 23);
+            this.txtCalculatedCFT.TabIndex = 14;
+            this.txtCalculatedCFT.TabStop = false;
+            this.txtCalculatedCFT.Text = "0.00";
+            this.txtCalculatedCFT.TextAlign = HorizontalAlignment.Right;
+            this.txtCalculatedCFT.Visible = false;
+            
             // lblRate
             this.lblRate.AutoSize = true;
-            this.lblRate.Location = new Point(20, 210);
+            this.lblRate.Location = new Point(20, 245);
             this.lblRate.Name = "lblRate";
             this.lblRate.Size = new Size(33, 15);
-            this.lblRate.TabIndex = 11;
+            this.lblRate.TabIndex = 15;
             this.lblRate.Text = "Rate:";
             
             // txtRate
-            this.txtRate.Location = new Point(130, 207);
+            this.txtRate.Location = new Point(130, 242);
             this.txtRate.Name = "txtRate";
             this.txtRate.Size = new Size(150, 23);
-            this.txtRate.TabIndex = 12;
+            this.txtRate.TabIndex = 16;
             this.txtRate.TextAlign = HorizontalAlignment.Right;
             this.txtRate.TextChanged += new EventHandler(this.TxtRate_TextChanged);
             
             // lblAmount
             this.lblAmount.AutoSize = true;
             this.lblAmount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.lblAmount.Location = new Point(20, 245);
+            this.lblAmount.Location = new Point(20, 280);
             this.lblAmount.Name = "lblAmount";
             this.lblAmount.Size = new Size(57, 15);
-            this.lblAmount.TabIndex = 13;
+            this.lblAmount.TabIndex = 17;
             this.lblAmount.Text = "Amount:";
             
             // txtAmount
             this.txtAmount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.txtAmount.Location = new Point(130, 242);
+            this.txtAmount.Location = new Point(130, 277);
             this.txtAmount.Name = "txtAmount";
             this.txtAmount.ReadOnly = true;
             this.txtAmount.Size = new Size(150, 23);
-            this.txtAmount.TabIndex = 14;
+            this.txtAmount.TabIndex = 18;
             this.txtAmount.TabStop = false;
             this.txtAmount.Text = "0.00";
             this.txtAmount.TextAlign = HorizontalAlignment.Right;
             
             // btnSave
             this.btnSave.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.btnSave.Location = new Point(252, 305);
+            this.btnSave.Location = new Point(252, 365);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new Size(100, 35);
             this.btnSave.TabIndex = 1;
@@ -196,7 +244,7 @@ namespace CrushEase.Forms
             this.btnSave.Click += new EventHandler(this.BtnSave_Click);
             
             // btnSaveAndNew
-            this.btnSaveAndNew.Location = new Point(362, 305);
+            this.btnSaveAndNew.Location = new Point(362, 365);
             this.btnSaveAndNew.Name = "btnSaveAndNew";
             this.btnSaveAndNew.Size = new Size(110, 35);
             this.btnSaveAndNew.TabIndex = 2;
@@ -205,7 +253,7 @@ namespace CrushEase.Forms
             this.btnSaveAndNew.Click += new EventHandler(this.BtnSaveAndNew_Click);
             
             // btnClose
-            this.btnClose.Location = new Point(482, 305);
+            this.btnClose.Location = new Point(482, 365);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new Size(90, 35);
             this.btnClose.TabIndex = 3;
@@ -216,7 +264,7 @@ namespace CrushEase.Forms
             // SaleEntryForm
             this.AutoScaleDimensions = new SizeF(7F, 15F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(584, 352);
+            this.ClientSize = new Size(584, 412);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnSaveAndNew);
             this.Controls.Add(this.btnSave);
@@ -244,8 +292,12 @@ namespace CrushEase.Forms
         private Button btnAddBuyer;
         private Label lblMaterial;
         private ComboBox cmbMaterial;
+        private Label lblUnit;
+        private ComboBox cmbUnit;
         private Label lblQuantity;
         private TextBox txtQuantity;
+        private Label lblCalculatedCFT;
+        private TextBox txtCalculatedCFT;
         private Label lblRate;
         private TextBox txtRate;
         private Label lblAmount;

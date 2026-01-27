@@ -65,6 +65,13 @@ public partial class MaterialMasterForm : Form
             if (dgvMaterials.Columns["Unit"] != null)
                 dgvMaterials.Columns["Unit"].HeaderText = "Unit";
             
+            if (dgvMaterials.Columns["ConversionFactor_MT_to_CFT"] != null)
+            {
+                dgvMaterials.Columns["ConversionFactor_MT_to_CFT"].HeaderText = "Density (MT/CFT)";
+                dgvMaterials.Columns["ConversionFactor_MT_to_CFT"].DefaultCellStyle.Format = "N4";
+                dgvMaterials.Columns["ConversionFactor_MT_to_CFT"].Width = 110;
+            }
+            
             if (dgvMaterials.Columns["Notes"] != null)
                 dgvMaterials.Columns["Notes"].HeaderText = "Notes";
             
@@ -170,6 +177,7 @@ public partial class MaterialMasterForm : Form
                 material.MaterialName = editForm.MaterialName.Trim();
                 material.Unit = editForm.Unit.Trim();
                 material.Notes = string.IsNullOrWhiteSpace(editForm.Notes) ? null : editForm.Notes.Trim();
+                material.ConversionFactor_MT_to_CFT = editForm.ConversionFactor;
                 
                 MaterialRepository.Update(material);
                 
@@ -254,10 +262,12 @@ internal class MaterialEditDialog : Form
 {
     private TextBox txtMaterialName;
     private TextBox txtUnit;
+    private NumericUpDown numConversionFactor;
     private TextBox txtNotes;
     
     public string MaterialName => txtMaterialName.Text;
     public string Unit => txtUnit.Text;
+    public decimal ConversionFactor => numConversionFactor.Value;
     public string Notes => txtNotes.Text;
     
     public MaterialEditDialog(Material material)
@@ -265,13 +275,14 @@ internal class MaterialEditDialog : Form
         InitializeComponent();
         txtMaterialName!.Text = material.MaterialName;
         txtUnit!.Text = material.Unit;
+        numConversionFactor!.Value = material.ConversionFactor_MT_to_CFT;
         txtNotes!.Text = material.Notes ?? "";
     }
     
     private void InitializeComponent()
     {
         this.Width = 450;
-        this.Height = 250;
+        this.Height = 300;
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
         this.Text = "Edit Material";
         this.StartPosition = FormStartPosition.CenterParent;
@@ -284,11 +295,14 @@ internal class MaterialEditDialog : Form
         var lblUnit = new Label { Left = 20, Top = 55, Width = 100, Text = "Unit:" };
         txtUnit = new TextBox { Left = 130, Top = 52, Width = 280 };
         
-        var lblNotes = new Label { Left = 20, Top = 90, Width = 100, Text = "Notes:" };
-        txtNotes = new TextBox { Left = 130, Top = 87, Width = 280, Height = 60, Multiline = true };
+        var lblConversionFactor = new Label { Left = 20, Top = 90, Width = 100, Text = "Density (MT/CFT):" };
+        numConversionFactor = new NumericUpDown { Left = 130, Top = 87, Width = 150, Minimum = 0.0001m, Maximum = 10m, DecimalPlaces = 4, Increment = 0.01m };
         
-        var btnOK = new Button { Text = "OK", Left = 230, Width = 80, Top = 165, DialogResult = DialogResult.OK };
-        var btnCancel = new Button { Text = "Cancel", Left = 320, Width = 80, Top = 165, DialogResult = DialogResult.Cancel };
+        var lblNotes = new Label { Left = 20, Top = 125, Width = 100, Text = "Notes:" };
+        txtNotes = new TextBox { Left = 130, Top = 122, Width = 280, Height = 60, Multiline = true };
+        
+        var btnOK = new Button { Text = "OK", Left = 230, Width = 80, Top = 200, DialogResult = DialogResult.OK };
+        var btnCancel = new Button { Text = "Cancel", Left = 320, Width = 80, Top = 200, DialogResult = DialogResult.Cancel };
         
         btnOK.Click += (s, e) => { 
             if (string.IsNullOrWhiteSpace(txtMaterialName.Text)) 
@@ -298,6 +312,10 @@ internal class MaterialEditDialog : Form
             else if (string.IsNullOrWhiteSpace(txtUnit.Text))
             {
                 MessageBox.Show("Unit is required");
+            }
+            else if (numConversionFactor.Value <= 0)
+            {
+                MessageBox.Show("Conversion factor must be greater than zero");
             }
             else 
             { 
@@ -310,6 +328,8 @@ internal class MaterialEditDialog : Form
         this.Controls.Add(txtMaterialName);
         this.Controls.Add(lblUnit);
         this.Controls.Add(txtUnit);
+        this.Controls.Add(lblConversionFactor);
+        this.Controls.Add(numConversionFactor);
         this.Controls.Add(lblNotes);
         this.Controls.Add(txtNotes);
         this.Controls.Add(btnOK);

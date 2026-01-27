@@ -81,7 +81,7 @@ public static class Config
     
     public static string ConnectionString => $"Data Source={DatabasePath};Version=3;";
     
-    public static int SchemaVersion => 1;
+    public static int SchemaVersion => 3;
 }
 
 /// <summary>

@@ -38,10 +38,12 @@ namespace CrushEase.Forms
             this.menuFile = new ToolStripMenuItem();
             this.menuHelp = new ToolStripMenuItem();
             this.menuCheckForUpdates = new ToolStripMenuItem();
+            this.menuCompanySettings = new ToolStripMenuItem();
             this.menuBackup = new ToolStripMenuItem();
             this.menuRestore = new ToolStripMenuItem();
             this.menuLock = new ToolStripMenuItem();
             this.toolStripSeparator2 = new ToolStripSeparator();
+            this.toolStripSeparator6 = new ToolStripSeparator();
             this.menuExit = new ToolStripMenuItem();
             
             this.groupToday = new GroupBox();
@@ -91,6 +93,8 @@ namespace CrushEase.Forms
             
             // File Menu
             this.menuFile.DropDownItems.AddRange(new ToolStripItem[] {
+                this.menuCompanySettings,
+                this.toolStripSeparator6,
                 this.menuBackup,
                 this.menuRestore,
                 this.menuLock,
@@ -101,8 +105,17 @@ namespace CrushEase.Forms
             this.menuFile.Size = new Size(37, 20);
             this.menuFile.Text = "&File";
             
+            this.menuCompanySettings.Name = "menuCompanySettings";
+            this.menuCompanySettings.Size = new Size(220, 22);
+            this.menuCompanySettings.Text = "&Company Settings...";
+            this.menuCompanySettings.ShortcutKeys = Keys.Control | Keys.Shift | Keys.S;
+            this.menuCompanySettings.Click += new EventHandler(this.MenuCompanySettings_Click);
+            
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new Size(217, 6);
+            
             this.menuBackup.Name = "menuBackup";
-            this.menuBackup.Size = new Size(180, 22);
+            this.menuBackup.Size = new Size(220, 22);
             this.menuBackup.Text = "&Backup Now...";
             this.menuBackup.ShortcutKeys = Keys.Control | Keys.B;
             this.menuBackup.Click += new EventHandler(this.MenuBackup_Click);
@@ -475,6 +488,8 @@ namespace CrushEase.Forms
 
         private MenuStrip menuStrip;
         private ToolStripMenuItem menuFile;
+        private ToolStripMenuItem menuCompanySettings;
+        private ToolStripSeparator toolStripSeparator6;
         private ToolStripMenuItem menuBackup;
         private ToolStripMenuItem menuRestore;
         private ToolStripMenuItem menuLock;

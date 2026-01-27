@@ -626,6 +626,22 @@ public partial class MainForm : Form
         }
     }
     
+    // Company Settings menu handler
+    private void MenuCompanySettings_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            var settingsForm = new CompanySettingsForm();
+            settingsForm.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to open company settings");
+            MessageBox.Show("Failed to open company settings: " + ex.Message, "Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
     // Helper class for recent transactions display
     private class RecentTransaction
     {

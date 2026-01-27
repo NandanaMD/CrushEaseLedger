@@ -45,6 +45,8 @@ public class Material
     public int MaterialId { get; set; }
     public string MaterialName { get; set; } = string.Empty;
     public string Unit { get; set; } = "Ton";
+    // Density factor: MT per CFT (e.g., 0.04 means 4 MT = 100 CFT)
+    public decimal ConversionFactor_MT_to_CFT { get; set; } = 0.04m;
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
@@ -63,6 +65,12 @@ public class Sale
     public decimal Quantity { get; set; }
     public decimal Rate { get; set; }
     public decimal Amount { get; set; }
+    
+    // MT/CFT Support (Schema v2)
+    public string InputUnit { get; set; } = "CFT";
+    public decimal InputQuantity { get; set; }
+    public decimal CalculatedCFT { get; set; }
+    
     public DateTime CreatedAt { get; set; }
     
     // Navigation properties (for display)
@@ -85,6 +93,12 @@ public class Purchase
     public decimal Rate { get; set; }
     public decimal Amount { get; set; }
     public string? VendorSite { get; set; }
+    
+    // MT/CFT Support (Schema v2)
+    public string InputUnit { get; set; } = "CFT";
+    public decimal InputQuantity { get; set; }
+    public decimal CalculatedCFT { get; set; }
+    
     public DateTime CreatedAt { get; set; }
     
     // Navigation properties (for display)
@@ -133,4 +147,37 @@ public class VehicleProfitSummary
     public decimal TotalPurchases { get; set; }
     public decimal TotalMaintenance { get; set; }
     public decimal NetProfit { get; set; }
+}
+
+/// <summary>
+/// Company/Business settings for invoice generation
+/// </summary>
+public class CompanySettings
+{
+    public int SettingsId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? GSTNumber { get; set; }
+    public string? Website { get; set; }
+    public byte[]? LogoImage { get; set; }
+    public string InvoicePrefix { get; set; } = "INV";
+    public string PaymentTerms { get; set; } = "Payment Due on Receipt";
+    public string? TermsAndConditions { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Invoice metadata for tracking generated invoices
+/// </summary>
+public class InvoiceMetadata
+{
+    public int InvoiceMetadataId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string TransactionType { get; set; } = string.Empty; // "Sale", "Purchase", "Maintenance"
+    public int TransactionId { get; set; }
+    public DateTime GeneratedDate { get; set; }
+    public string GeneratedBy { get; set; } = "System";
+    public string FilePath { get; set; } = string.Empty;
 }

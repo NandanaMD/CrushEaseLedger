@@ -182,6 +182,36 @@ public static class DatabaseManager
             
             CREATE INDEX idx_maintenance_date ON maintenance(maintenance_date);
             CREATE INDEX idx_maintenance_vehicle ON maintenance(vehicle_id);
+            
+            -- Company settings table (single row)
+            CREATE TABLE company_settings (
+                settings_id INTEGER PRIMARY KEY CHECK(settings_id = 1),
+                company_name TEXT NOT NULL,
+                address TEXT,
+                phone TEXT,
+                email TEXT,
+                gst_number TEXT,
+                website TEXT,
+                logo_image BLOB,
+                invoice_prefix TEXT DEFAULT 'INV',
+                payment_terms TEXT DEFAULT 'Payment Due on Receipt',
+                terms_and_conditions TEXT,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            -- Invoice metadata for tracking generated invoices
+            CREATE TABLE invoice_metadata (
+                invoice_metadata_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                invoice_number TEXT NOT NULL UNIQUE,
+                transaction_type TEXT NOT NULL,
+                transaction_id INTEGER NOT NULL,
+                generated_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                generated_by TEXT DEFAULT 'System',
+                file_path TEXT
+            );
+            
+            CREATE INDEX idx_invoice_number ON invoice_metadata(invoice_number);
+            CREATE INDEX idx_invoice_transaction ON invoice_metadata(transaction_type, transaction_id);
         ";
         
         using var cmd = new SQLiteCommand(schema, connection);
@@ -230,8 +260,180 @@ public static class DatabaseManager
             if (dbVersion < Config.SchemaVersion)
             {
                 Logger.LogInfo($"Schema upgrade needed: {dbVersion} -> {Config.SchemaVersion}");
-                // Future: Run migration scripts
+                UpgradeSchema(connection, dbVersion, Config.SchemaVersion);
             }
+        }
+    }
+    
+    private static void UpgradeSchema(SQLiteConnection connection, int fromVersion, int toVersion)
+    {
+        Logger.LogInfo($"Starting schema upgrade from version {fromVersion} to {toVersion}");
+        
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // Upgrade from version 1 to version 2
+            if (fromVersion == 1 && toVersion >= 2)
+            {
+                Logger.LogInfo("Applying schema changes for version 2 (MT support)");
+                
+                // Add ConversionFactor_MT_to_CFT to materials table
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE materials ADD COLUMN conversion_factor_mt_to_cft REAL DEFAULT 1.0",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // Add InputUnit, InputQuantity, CalculatedCFT to sales table
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE sales ADD COLUMN input_unit TEXT DEFAULT 'CFT'",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE sales ADD COLUMN input_quantity REAL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE sales ADD COLUMN calculated_cft REAL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // Add InputUnit, InputQuantity, CalculatedCFT to purchases table
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE purchases ADD COLUMN input_unit TEXT DEFAULT 'CFT'",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE purchases ADD COLUMN input_quantity REAL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (var cmd = new SQLiteCommand(
+                    "ALTER TABLE purchases ADD COLUMN calculated_cft REAL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // Populate new fields for existing records (backward compatibility)
+                // For existing sales: InputUnit=CFT, InputQuantity=existing quantity, CalculatedCFT=existing quantity
+                using (var cmd = new SQLiteCommand(
+                    @"UPDATE sales 
+                      SET input_unit = 'CFT', 
+                          input_quantity = quantity, 
+                          calculated_cft = quantity 
+                      WHERE input_quantity IS NULL OR calculated_cft IS NULL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // For existing purchases: InputUnit=CFT, InputQuantity=existing quantity, CalculatedCFT=existing quantity
+                using (var cmd = new SQLiteCommand(
+                    @"UPDATE purchases 
+                      SET input_unit = 'CFT', 
+                          input_quantity = quantity, 
+                          calculated_cft = quantity 
+                      WHERE input_quantity IS NULL OR calculated_cft IS NULL",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                Logger.LogInfo("Schema version 2 changes applied successfully");
+            }
+            
+            // Upgrade from version 2 to version 3
+            if (fromVersion <= 2 && toVersion >= 3)
+            {
+                Logger.LogInfo("Applying schema changes for version 3 (Invoice system)");
+                
+                // Add company_settings table
+                using (var cmd = new SQLiteCommand(
+                    @"CREATE TABLE IF NOT EXISTS company_settings (
+                        settings_id INTEGER PRIMARY KEY CHECK(settings_id = 1),
+                        company_name TEXT NOT NULL DEFAULT '',
+                        address TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        email TEXT DEFAULT '',
+                        gst_number TEXT,
+                        website TEXT,
+                        logo_image BLOB,
+                        invoice_prefix TEXT DEFAULT 'INV',
+                        payment_terms TEXT DEFAULT 'Payment Due on Receipt',
+                        terms_and_conditions TEXT,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // Add invoice_metadata table
+                using (var cmd = new SQLiteCommand(
+                    @"CREATE TABLE IF NOT EXISTS invoice_metadata (
+                        invoice_metadata_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        invoice_number TEXT NOT NULL UNIQUE,
+                        transaction_type TEXT NOT NULL,
+                        transaction_id INTEGER NOT NULL,
+                        generated_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                        generated_by TEXT DEFAULT 'System',
+                        file_path TEXT
+                    )",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                // Create indexes
+                using (var cmd = new SQLiteCommand(
+                    "CREATE INDEX IF NOT EXISTS idx_invoice_number ON invoice_metadata(invoice_number)",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (var cmd = new SQLiteCommand(
+                    "CREATE INDEX IF NOT EXISTS idx_invoice_transaction ON invoice_metadata(transaction_type, transaction_id)",
+                    connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                Logger.LogInfo("Schema version 3 changes applied successfully");
+            }
+            
+            // Update schema version
+            using (var cmd = new SQLiteCommand(
+                "UPDATE app_metadata SET value = @version WHERE key = 'schema_version'",
+                connection))
+            {
+                cmd.Parameters.AddWithValue("@version", toVersion.ToString());
+                cmd.ExecuteNonQuery();
+            }
+            
+            transaction.Commit();
+            Logger.LogInfo($"Schema upgrade completed successfully to version {toVersion}");
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            Logger.LogError(ex, "Schema upgrade failed");
+            throw new Exception($"Failed to upgrade database schema from {fromVersion} to {toVersion}", ex);
         }
     }
     

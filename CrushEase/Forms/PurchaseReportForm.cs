@@ -130,6 +130,7 @@ public partial class PurchaseReportForm : Form
                 dgvReport.Columns["VendorId"].Visible = false;
                 dgvReport.Columns["MaterialId"].Visible = false;
                 dgvReport.Columns["CreatedAt"].Visible = false;
+                dgvReport.Columns["Quantity"].Visible = false; // Hide old Quantity, show new fields instead
                 
                 dgvReport.Columns["PurchaseDate"].HeaderText = "Date";
                 dgvReport.Columns["PurchaseDate"].DefaultCellStyle.Format = "dd-MMM-yyyy";
@@ -137,11 +138,20 @@ public partial class PurchaseReportForm : Form
                 dgvReport.Columns["VendorName"].HeaderText = "Vendor";
                 dgvReport.Columns["MaterialName"].HeaderText = "Material";
                 dgvReport.Columns["VendorSite"].HeaderText = "Vendor Site";
-                dgvReport.Columns["Quantity"].DefaultCellStyle.Format = "N2";
+                
+                // Display new MT/CFT fields
+                dgvReport.Columns["InputUnit"].HeaderText = "Unit";
+                dgvReport.Columns["InputUnit"].Width = 50;
+                dgvReport.Columns["InputQuantity"].HeaderText = "Qty";
+                dgvReport.Columns["InputQuantity"].DefaultCellStyle.Format = "N2";
+                dgvReport.Columns["InputQuantity"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvReport.Columns["CalculatedCFT"].HeaderText = "CFT";
+                dgvReport.Columns["CalculatedCFT"].DefaultCellStyle.Format = "N2";
+                dgvReport.Columns["CalculatedCFT"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                
                 dgvReport.Columns["Rate"].DefaultCellStyle.Format = "N2";
                 dgvReport.Columns["Amount"].DefaultCellStyle.Format = "N2";
                 
-                dgvReport.Columns["Quantity"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 dgvReport.Columns["Rate"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 dgvReport.Columns["Amount"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
