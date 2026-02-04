@@ -8,9 +8,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>CrushEase</AssemblyName>
     <Product>CrushEase Ledger</Product>
-    <Version>1.0.12</Version>
-    <AssemblyVersion>1.0.12.0</AssemblyVersion>
-    <FileVersion>1.0.12.0</FileVersion>
+    <Version>1.0.13</Version>
+    <AssemblyVersion>1.0.13.0</AssemblyVersion>
+    <FileVersion>1.0.13.0</FileVersion>
     <Authors>CrushEase Development</Authors>
     <Company>CrushEase</Company>
     <ApplicationIcon>assets\mainlogo.ico</ApplicationIcon>
