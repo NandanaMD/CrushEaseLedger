@@ -84,15 +84,18 @@ jobs:
           exit 1
         }
         
-        # Compile installer
-        & $iscc "installer\CrushEaseInstaller.iss"
+        # Set version for Inno Setup to use
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        
+        # Compile installer with version override
+        & $iscc "installer\CrushEaseInstaller.iss" "/DMyAppVersion=$version"
         
         if ($LASTEXITCODE -ne 0) {
           Write-Error "Installer compilation failed!"
           exit 1
         }
         
-        Write-Host "Installer created successfully!"
+        Write-Host "Installer created successfully with version: $version"
     
     - name: Verify installer exists
       shell: pwsh

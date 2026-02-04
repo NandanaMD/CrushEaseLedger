@@ -65,7 +65,7 @@ Write-Host ""
 
 # Step 3: Compile Installer
 Write-Host "Step 3: Compiling installer..." -ForegroundColor Yellow
-& $innoSetupPath "installer\CrushEaseInstaller.iss"
+& $innoSetupPath "installer\CrushEaseInstaller.iss" "/DMyAppVersion=$version"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Installer compilation failed!" -ForegroundColor Red

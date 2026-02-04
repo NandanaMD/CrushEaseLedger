@@ -2,7 +2,9 @@
 ; Created with Inno Setup
 
 #define MyAppName "CrushEase Ledger"
-#define MyAppVersion "1.0.0"
+#ifndef MyAppVersion
+  #define MyAppVersion GetStringFileInfo("..\CrushEase\bin\Release\net8.0-windows\CrushEase.exe", "ProductVersion")
+#endif
 #define MyAppPublisher "CrushEase Development"
 #define MyAppExeName "CrushEase.exe"
 #define MyAppAssocName "CrushEase Database"
