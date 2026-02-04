@@ -20,6 +20,8 @@ namespace CrushEase.Forms
             this.lblNotes = new Label();
             this.txtUnit = new TextBox();
             this.lblUnit = new Label();
+            this.txtConversionFactor = new TextBox();
+            this.lblConversionFactor = new Label();
             this.txtMaterialName = new TextBox();
             this.lblMaterialName = new Label();
             this.btnAdd = new Button();
@@ -51,6 +53,8 @@ namespace CrushEase.Forms
             this.groupInput.Controls.Add(this.lblNotes);
             this.groupInput.Controls.Add(this.txtUnit);
             this.groupInput.Controls.Add(this.lblUnit);
+            this.groupInput.Controls.Add(this.txtConversionFactor);
+            this.groupInput.Controls.Add(this.lblConversionFactor);
             this.groupInput.Controls.Add(this.txtMaterialName);
             this.groupInput.Controls.Add(this.lblMaterialName);
             this.groupInput.Location = new Point(12, 12);
@@ -88,12 +92,27 @@ namespace CrushEase.Forms
             this.txtUnit.Size = new Size(150, 23);
             this.txtUnit.TabIndex = 3;
             
+            // lblConversionFactor
+            this.lblConversionFactor.AutoSize = true;
+            this.lblConversionFactor.Location = new Point(15, 90);
+            this.lblConversionFactor.Name = "lblConversionFactor";
+            this.lblConversionFactor.Size = new Size(100, 15);
+            this.lblConversionFactor.TabIndex = 4;
+            this.lblConversionFactor.Text = "Density (MT/CFT):";
+            
+            // txtConversionFactor
+            this.txtConversionFactor.Location = new Point(120, 87);
+            this.txtConversionFactor.Name = "txtConversionFactor";
+            this.txtConversionFactor.Size = new Size(150, 23);
+            this.txtConversionFactor.TabIndex = 5;
+            this.txtConversionFactor.Text = "0.04";
+            
             // lblNotes
             this.lblNotes.AutoSize = true;
             this.lblNotes.Location = new Point(400, 30);
             this.lblNotes.Name = "lblNotes";
             this.lblNotes.Size = new Size(41, 15);
-            this.lblNotes.TabIndex = 4;
+            this.lblNotes.TabIndex = 6;
             this.lblNotes.Text = "Notes:";
             
             // txtNotes
@@ -101,13 +120,13 @@ namespace CrushEase.Forms
             this.txtNotes.Multiline = true;
             this.txtNotes.Name = "txtNotes";
             this.txtNotes.Size = new Size(290, 53);
-            this.txtNotes.TabIndex = 5;
+            this.txtNotes.TabIndex = 7;
             
             // btnAdd
             this.btnAdd.Location = new Point(560, 86);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new Size(80, 25);
-            this.btnAdd.TabIndex = 6;
+            this.btnAdd.TabIndex = 8;
             this.btnAdd.Text = "Clear";
             this.btnAdd.UseVisualStyleBackColor = true;
             this.btnAdd.Click += new EventHandler(this.BtnAdd_Click);
@@ -117,7 +136,7 @@ namespace CrushEase.Forms
             this.btnSave.Location = new Point(660, 86);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new Size(80, 25);
-            this.btnSave.TabIndex = 7;
+            this.btnSave.TabIndex = 9;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new EventHandler(this.BtnSave_Click);
@@ -244,6 +263,8 @@ namespace CrushEase.Forms
         private TextBox txtMaterialName;
         private Label lblUnit;
         private TextBox txtUnit;
+        private Label lblConversionFactor;
+        private TextBox txtConversionFactor;
         private Label lblNotes;
         private TextBox txtNotes;
         private Button btnAdd;

@@ -20,6 +20,8 @@ namespace CrushEase.Forms
         private Label lblSalesTo;
         private Label lblSalesVehicle;
         private Label lblSalesCount;
+        private Label lblSalesSearch;
+        private TextBox txtSalesSearch;
         
         // Purchases tab controls
         private DataGridView dgvPurchases;
@@ -33,6 +35,8 @@ namespace CrushEase.Forms
         private Label lblPurchasesTo;
         private Label lblPurchasesVehicle;
         private Label lblPurchasesCount;
+        private Label lblPurchasesSearch;
+        private TextBox txtPurchasesSearch;
         
         // Maintenance tab controls
         private DataGridView dgvMaintenance;
@@ -46,6 +50,8 @@ namespace CrushEase.Forms
         private Label lblMaintenanceTo;
         private Label lblMaintenanceVehicle;
         private Label lblMaintenanceCount;
+        private Label lblMaintenanceSearch;
+        private TextBox txtMaintenanceSearch;
         
         // Common controls
         private Button btnRefresh;
@@ -79,6 +85,8 @@ namespace CrushEase.Forms
             this.lblSalesTo = new Label();
             this.lblSalesVehicle = new Label();
             this.lblSalesCount = new Label();
+            this.lblSalesSearch = new Label();
+            this.txtSalesSearch = new TextBox();
             
             // Purchases
             this.dgvPurchases = new DataGridView();
@@ -92,6 +100,8 @@ namespace CrushEase.Forms
             this.lblPurchasesTo = new Label();
             this.lblPurchasesVehicle = new Label();
             this.lblPurchasesCount = new Label();
+            this.lblPurchasesSearch = new Label();
+            this.txtPurchasesSearch = new TextBox();
             
             // Maintenance
             this.dgvMaintenance = new DataGridView();
@@ -105,6 +115,8 @@ namespace CrushEase.Forms
             this.lblMaintenanceTo = new Label();
             this.lblMaintenanceVehicle = new Label();
             this.lblMaintenanceCount = new Label();
+            this.lblMaintenanceSearch = new Label();
+            this.txtMaintenanceSearch = new TextBox();
             
             // Common
             this.btnRefresh = new Button();
@@ -142,6 +154,8 @@ namespace CrushEase.Forms
             this.tabSales.Controls.Add(this.lblSalesTo);
             this.tabSales.Controls.Add(this.lblSalesVehicle);
             this.tabSales.Controls.Add(this.lblSalesCount);
+            this.tabSales.Controls.Add(this.lblSalesSearch);
+            this.tabSales.Controls.Add(this.txtSalesSearch);
             this.tabSales.Location = new Point(4, 24);
             this.tabSales.Name = "tabSales";
             this.tabSales.Padding = new Padding(10);
@@ -205,13 +219,29 @@ namespace CrushEase.Forms
             this.btnApplySalesFilter.UseVisualStyleBackColor = true;
             this.btnApplySalesFilter.Click += new EventHandler(this.BtnApplySalesFilter_Click);
             
+            // lblSalesSearch
+            this.lblSalesSearch.AutoSize = true;
+            this.lblSalesSearch.Location = new Point(710, 15);
+            this.lblSalesSearch.Name = "lblSalesSearch";
+            this.lblSalesSearch.Size = new Size(45, 15);
+            this.lblSalesSearch.TabIndex = 7;
+            this.lblSalesSearch.Text = "Search:";
+            
+            // txtSalesSearch
+            this.txtSalesSearch.Location = new Point(760, 12);
+            this.txtSalesSearch.Name = "txtSalesSearch";
+            this.txtSalesSearch.PlaceholderText = "Search sales...";
+            this.txtSalesSearch.Size = new Size(200, 23);
+            this.txtSalesSearch.TabIndex = 8;
+            this.txtSalesSearch.TextChanged += new EventHandler(this.TxtSalesSearch_TextChanged);
+            
             // lblSalesCount
             this.lblSalesCount.AutoSize = true;
             this.lblSalesCount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.lblSalesCount.Location = new Point(710, 15);
+            this.lblSalesCount.Location = new Point(980, 15);
             this.lblSalesCount.Name = "lblSalesCount";
             this.lblSalesCount.Size = new Size(50, 15);
-            this.lblSalesCount.TabIndex = 7;
+            this.lblSalesCount.TabIndex = 9;
             this.lblSalesCount.Text = "Total: 0";
             
             // dgvSales
@@ -224,15 +254,16 @@ namespace CrushEase.Forms
             this.dgvSales.ReadOnly = true;
             this.dgvSales.RowHeadersVisible = false;
             this.dgvSales.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvSales.MultiSelect = true;
             this.dgvSales.Size = new Size(1172, 527);
-            this.dgvSales.TabIndex = 8;
+            this.dgvSales.TabIndex = 10;
             this.dgvSales.CellDoubleClick += new DataGridViewCellEventHandler(this.DgvSales_CellDoubleClick);
             
             // btnEditSale
             this.btnEditSale.Location = new Point(10, 582);
             this.btnEditSale.Name = "btnEditSale";
             this.btnEditSale.Size = new Size(90, 30);
-            this.btnEditSale.TabIndex = 9;
+            this.btnEditSale.TabIndex = 11;
             this.btnEditSale.Text = "Edit";
             this.btnEditSale.UseVisualStyleBackColor = true;
             this.btnEditSale.Click += new EventHandler(this.BtnEditSale_Click);
@@ -258,6 +289,8 @@ namespace CrushEase.Forms
             this.tabPurchases.Controls.Add(this.lblPurchasesTo);
             this.tabPurchases.Controls.Add(this.lblPurchasesVehicle);
             this.tabPurchases.Controls.Add(this.lblPurchasesCount);
+            this.tabPurchases.Controls.Add(this.lblPurchasesSearch);
+            this.tabPurchases.Controls.Add(this.txtPurchasesSearch);
             this.tabPurchases.Location = new Point(4, 24);
             this.tabPurchases.Name = "tabPurchases";
             this.tabPurchases.Padding = new Padding(10);
@@ -321,13 +354,29 @@ namespace CrushEase.Forms
             this.btnApplyPurchasesFilter.UseVisualStyleBackColor = true;
             this.btnApplyPurchasesFilter.Click += new EventHandler(this.BtnApplyPurchasesFilter_Click);
             
+            // lblPurchasesSearch
+            this.lblPurchasesSearch.AutoSize = true;
+            this.lblPurchasesSearch.Location = new Point(710, 15);
+            this.lblPurchasesSearch.Name = "lblPurchasesSearch";
+            this.lblPurchasesSearch.Size = new Size(45, 15);
+            this.lblPurchasesSearch.TabIndex = 7;
+            this.lblPurchasesSearch.Text = "Search:";
+            
+            // txtPurchasesSearch
+            this.txtPurchasesSearch.Location = new Point(760, 12);
+            this.txtPurchasesSearch.Name = "txtPurchasesSearch";
+            this.txtPurchasesSearch.PlaceholderText = "Search purchases...";
+            this.txtPurchasesSearch.Size = new Size(200, 23);
+            this.txtPurchasesSearch.TabIndex = 8;
+            this.txtPurchasesSearch.TextChanged += new EventHandler(this.TxtPurchasesSearch_TextChanged);
+            
             // lblPurchasesCount
             this.lblPurchasesCount.AutoSize = true;
             this.lblPurchasesCount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.lblPurchasesCount.Location = new Point(710, 15);
+            this.lblPurchasesCount.Location = new Point(980, 15);
             this.lblPurchasesCount.Name = "lblPurchasesCount";
             this.lblPurchasesCount.Size = new Size(50, 15);
-            this.lblPurchasesCount.TabIndex = 7;
+            this.lblPurchasesCount.TabIndex = 9;
             this.lblPurchasesCount.Text = "Total: 0";
             
             // dgvPurchases
@@ -340,8 +389,9 @@ namespace CrushEase.Forms
             this.dgvPurchases.ReadOnly = true;
             this.dgvPurchases.RowHeadersVisible = false;
             this.dgvPurchases.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvPurchases.MultiSelect = true;
             this.dgvPurchases.Size = new Size(1172, 527);
-            this.dgvPurchases.TabIndex = 8;
+            this.dgvPurchases.TabIndex = 10;
             this.dgvPurchases.CellDoubleClick += new DataGridViewCellEventHandler(this.DgvPurchases_CellDoubleClick);
             
             // btnEditPurchase
@@ -374,6 +424,8 @@ namespace CrushEase.Forms
             this.tabMaintenance.Controls.Add(this.lblMaintenanceTo);
             this.tabMaintenance.Controls.Add(this.lblMaintenanceVehicle);
             this.tabMaintenance.Controls.Add(this.lblMaintenanceCount);
+            this.tabMaintenance.Controls.Add(this.lblMaintenanceSearch);
+            this.tabMaintenance.Controls.Add(this.txtMaintenanceSearch);
             this.tabMaintenance.Location = new Point(4, 24);
             this.tabMaintenance.Name = "tabMaintenance";
             this.tabMaintenance.Padding = new Padding(10);
@@ -437,13 +489,29 @@ namespace CrushEase.Forms
             this.btnApplyMaintenanceFilter.UseVisualStyleBackColor = true;
             this.btnApplyMaintenanceFilter.Click += new EventHandler(this.BtnApplyMaintenanceFilter_Click);
             
+            // lblMaintenanceSearch
+            this.lblMaintenanceSearch.AutoSize = true;
+            this.lblMaintenanceSearch.Location = new Point(710, 15);
+            this.lblMaintenanceSearch.Name = "lblMaintenanceSearch";
+            this.lblMaintenanceSearch.Size = new Size(45, 15);
+            this.lblMaintenanceSearch.TabIndex = 7;
+            this.lblMaintenanceSearch.Text = "Search:";
+            
+            // txtMaintenanceSearch
+            this.txtMaintenanceSearch.Location = new Point(760, 12);
+            this.txtMaintenanceSearch.Name = "txtMaintenanceSearch";
+            this.txtMaintenanceSearch.PlaceholderText = "Search maintenance...";
+            this.txtMaintenanceSearch.Size = new Size(200, 23);
+            this.txtMaintenanceSearch.TabIndex = 8;
+            this.txtMaintenanceSearch.TextChanged += new EventHandler(this.TxtMaintenanceSearch_TextChanged);
+            
             // lblMaintenanceCount
             this.lblMaintenanceCount.AutoSize = true;
             this.lblMaintenanceCount.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            this.lblMaintenanceCount.Location = new Point(710, 15);
+            this.lblMaintenanceCount.Location = new Point(980, 15);
             this.lblMaintenanceCount.Name = "lblMaintenanceCount";
             this.lblMaintenanceCount.Size = new Size(50, 15);
-            this.lblMaintenanceCount.TabIndex = 7;
+            this.lblMaintenanceCount.TabIndex = 9;
             this.lblMaintenanceCount.Text = "Total: 0";
             
             // dgvMaintenance
@@ -456,8 +524,9 @@ namespace CrushEase.Forms
             this.dgvMaintenance.ReadOnly = true;
             this.dgvMaintenance.RowHeadersVisible = false;
             this.dgvMaintenance.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvMaintenance.MultiSelect = true;
             this.dgvMaintenance.Size = new Size(1172, 527);
-            this.dgvMaintenance.TabIndex = 8;
+            this.dgvMaintenance.TabIndex = 10;
             this.dgvMaintenance.CellDoubleClick += new DataGridViewCellEventHandler(this.DgvMaintenance_CellDoubleClick);
             
             // btnEditMaintenance

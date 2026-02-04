@@ -21,6 +21,16 @@ public partial class PurchaseReportForm : Form
         _currentData = new List<Purchase>();
     }
     
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Delete)
+        {
+            BtnDelete_Click(this, EventArgs.Empty);
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+    
     private void PurchaseReportForm_Load(object sender, EventArgs e)
     {
         // Set default date range to current month
@@ -269,14 +279,13 @@ public partial class PurchaseReportForm : Form
     {
         if (dgvReport.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a purchase to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select purchase(s) to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var purchase = (Purchase)dgvReport.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvReport.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this purchase?\\n\\nDate: {purchase.PurchaseDate:dd-MMM-yyyy}\\nVehicle: {purchase.VehicleNo}\\nVendor: {purchase.VendorName}\\nAmount: ₹{purchase.Amount:N2}",
+            $"Are you sure you want to delete {count} purchase(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
@@ -286,14 +295,70 @@ public partial class PurchaseReportForm : Form
         
         try
         {
-            PurchaseRepository.Delete(purchase.PurchaseId);
+            int successCount = 0;
+            foreach (DataGridViewRow row in dgvReport.SelectedRows)
+            {
+                var purchase = (Purchase)row.DataBoundItem;
+                PurchaseRepository.Delete(purchase.PurchaseId);
+                successCount++;
+            }
+            
             LoadReport();
-            MessageBox.Show("Purchase deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"{successCount} purchase(s) deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to delete purchase");
+            Logger.LogError(ex, "Failed to delete purchase(s)");
             MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    private void BtnPrintReceipt_Click(object sender, EventArgs e)
+    {
+        if (dgvReport.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a purchase to print receipt", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        if (dgvReport.SelectedRows.Count > 1)
+        {
+            MessageBox.Show("Please select only one purchase at a time to print receipt", "Multiple Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        try
+        {
+            var purchase = (Purchase)dgvReport.SelectedRows[0].DataBoundItem;
+            var result = InvoiceGenerator.GeneratePurchaseReceipt(purchase);
+            
+            if (result.Success)
+            {
+                var dialogResult = MessageBox.Show(
+                    $"Receipt generated successfully!\\n\\nReceipt No: {result.InvoiceNumber}\\nLocation: {result.FilePath}\\n\\nWould you like to open the receipt?",
+                    "Success",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information
+                );
+                
+                if (dialogResult == DialogResult.Yes && !string.IsNullOrEmpty(result.FilePath))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = result.FilePath,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            else
+            {
+                MessageBox.Show($"Failed to generate receipt:\\n{result.ErrorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to print receipt");
+            MessageBox.Show($"Failed to print receipt: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

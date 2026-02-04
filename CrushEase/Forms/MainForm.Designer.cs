@@ -35,8 +35,15 @@ namespace CrushEase.Forms
             this.menuMaintenanceReport = new ToolStripMenuItem();
             this.toolStripSeparator5 = new ToolStripSeparator();
             this.menuExportAllData = new ToolStripMenuItem();
+            this.menuTools = new ToolStripMenuItem();
+            this.menuCalculator = new ToolStripMenuItem();
+            this.menuTrash = new ToolStripMenuItem();
+            this.toolStripSeparator7 = new ToolStripSeparator();
+            this.txtSearch = new ToolStripTextBox();
             this.menuFile = new ToolStripMenuItem();
             this.menuHelp = new ToolStripMenuItem();
+            this.menuAbout = new ToolStripMenuItem();
+            this.toolStripSeparator8 = new ToolStripSeparator();
             this.menuCheckForUpdates = new ToolStripMenuItem();
             this.menuCompanySettings = new ToolStripMenuItem();
             this.menuBackup = new ToolStripMenuItem();
@@ -84,11 +91,12 @@ namespace CrushEase.Forms
                 this.menuMasters,
                 this.menuTransactions,
                 this.menuReports,
+                this.menuTools,
                 this.menuHelp
             });
             this.menuStrip.Location = new Point(0, 0);
             this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new Size(1000, 24);
+            this.menuStrip.Size = new Size(1000, 27);
             this.menuStrip.TabIndex = 0;
             
             // File Menu
@@ -264,13 +272,55 @@ namespace CrushEase.Forms
             this.menuExportAllData.ShortcutKeys = Keys.Control | Keys.E;
             this.menuExportAllData.Click += new EventHandler(this.MenuExportAllData_Click);
             
+            // Tools Menu
+            this.menuTools.DropDownItems.AddRange(new ToolStripItem[] {
+                this.menuCalculator,
+                this.menuTrash,
+                this.toolStripSeparator7,
+                this.txtSearch
+            });
+            this.menuTools.Name = "menuTools";
+            this.menuTools.Size = new Size(46, 20);
+            this.menuTools.Text = "&Tools";
+            
+            this.menuCalculator.Name = "menuCalculator";
+            this.menuCalculator.Size = new Size(200, 22);
+            this.menuCalculator.Text = "&Calculator";
+            this.menuCalculator.ShortcutKeys = Keys.Control | Keys.K;
+            this.menuCalculator.Click += new EventHandler(this.MenuCalculator_Click);
+            
+            this.menuTrash.Name = "menuTrash";
+            this.menuTrash.Size = new Size(200, 22);
+            this.menuTrash.Text = "&Trash / Deleted Items";
+            this.menuTrash.ShortcutKeys = Keys.Control | Keys.Shift | Keys.T;
+            this.menuTrash.Click += new EventHandler(this.MenuTrash_Click);
+            
+            this.toolStripSeparator7.Name = "toolStripSeparator7";
+            this.toolStripSeparator7.Size = new Size(197, 6);
+            
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new Size(150, 23);
+            this.txtSearch.ToolTipText = "Search transactions (Ctrl+F)";
+            this.txtSearch.BorderStyle = BorderStyle.FixedSingle;
+            this.txtSearch.KeyDown += new KeyEventHandler(this.TxtSearch_KeyDown);
+            
             // Help Menu
             this.menuHelp.DropDownItems.AddRange(new ToolStripItem[] {
+                this.menuAbout,
+                this.toolStripSeparator8,
                 this.menuCheckForUpdates
             });
             this.menuHelp.Name = "menuHelp";
             this.menuHelp.Size = new Size(44, 20);
             this.menuHelp.Text = "&Help";
+            
+            this.menuAbout.Name = "menuAbout";
+            this.menuAbout.Size = new Size(180, 22);
+            this.menuAbout.Text = "&About CrushEase...";
+            this.menuAbout.Click += new EventHandler(this.MenuAbout_Click);
+            
+            this.toolStripSeparator8.Name = "toolStripSeparator8";
+            this.toolStripSeparator8.Size = new Size(177, 6);
             
             this.menuCheckForUpdates.Name = "menuCheckForUpdates";
             this.menuCheckForUpdates.Size = new Size(180, 22);
@@ -431,7 +481,12 @@ namespace CrushEase.Forms
             this.dgvRecent.MouseClick += new MouseEventHandler(this.DgvRecent_MouseClick);
             
             // statusStrip
-            this.statusStrip.Items.AddRange(new ToolStripItem[] { this.lblStatus });
+            this.lblVersionStatus = new ToolStripStatusLabel();
+            this.statusStrip.Items.AddRange(new ToolStripItem[] { 
+                this.lblStatus,
+                new ToolStripStatusLabel { Spring = true },
+                this.lblVersionStatus
+            });
             this.statusStrip.Location = new Point(0, 555);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new Size(1000, 22);
@@ -441,6 +496,13 @@ namespace CrushEase.Forms
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new Size(39, 17);
             this.lblStatus.Text = "Ready";
+            
+            // lblVersionStatus
+            this.lblVersionStatus.Name = "lblVersionStatus";
+            this.lblVersionStatus.Size = new Size(80, 17);
+            this.lblVersionStatus.Text = "Loading...";
+            this.lblVersionStatus.BorderSides = ToolStripStatusLabelBorderSides.Left;
+            this.lblVersionStatus.BorderStyle = Border3DStyle.Etched;
             
             // MainForm
             this.AutoScaleDimensions = new SizeF(7F, 15F);
@@ -514,6 +576,11 @@ namespace CrushEase.Forms
         private ToolStripMenuItem menuMaintenanceReport;
         private ToolStripSeparator toolStripSeparator5;
         private ToolStripMenuItem menuExportAllData;
+        private ToolStripMenuItem menuTools;
+        private ToolStripMenuItem menuCalculator;
+        private ToolStripMenuItem menuTrash;
+        private ToolStripSeparator toolStripSeparator7;
+        private ToolStripTextBox txtSearch;
         private GroupBox groupToday;
         private Label lblTodaySales;
         private Label lblTodayPurchases;
@@ -532,7 +599,10 @@ namespace CrushEase.Forms
         private DataGridView dgvRecent;
         private StatusStrip statusStrip;
         private ToolStripStatusLabel lblStatus;
+        private ToolStripStatusLabel lblVersionStatus;
         private ToolStripMenuItem menuHelp;
+        private ToolStripMenuItem menuAbout;
+        private ToolStripSeparator toolStripSeparator8;
         private ToolStripMenuItem menuCheckForUpdates;
     }
 }

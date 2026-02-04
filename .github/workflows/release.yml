@@ -1,0 +1,197 @@
+name: Build and Release CrushEase Ledger
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for proper versioning
+    
+    - name: Extract version from tag
+      id: get_version
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}"
+        $version = $tag -replace '^v', ''
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+        Write-Host "Building version: $version"
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore CrushEase\CrushEase.csproj
+    
+    - name: Build Release (Self-Contained)
+      shell: pwsh
+      run: |
+        Write-Host "Building self-contained Release version..."
+        dotnet publish CrushEase\CrushEase.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=false `
+          -o CrushEase\bin\Release\net8.0-windows `
+          -p:Version=${{ steps.get_version.outputs.VERSION }}
+        
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Build failed!"
+          exit 1
+        }
+        Write-Host "Build completed successfully!"
+    
+    - name: Setup Inno Setup
+      shell: pwsh
+      run: |
+        Write-Host "Downloading Inno Setup..."
+        $innoUrl = "https://jrsoftware.org/download.php/is.exe"
+        $innoInstaller = "$env:TEMP\innosetup.exe"
+        
+        # Download Inno Setup
+        Invoke-WebRequest -Uri $innoUrl -OutFile $innoInstaller -UseBasicParsing
+        
+        Write-Host "Installing Inno Setup..."
+        # Install silently
+        Start-Process -FilePath $innoInstaller -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait
+        
+        # Add to PATH for this session
+        $innoPath = "C:\Program Files (x86)\Inno Setup 6"
+        echo "$innoPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
+        Write-Host "Inno Setup installed successfully!"
+    
+    - name: Build Installer
+      shell: pwsh
+      run: |
+        Write-Host "Building installer with Inno Setup..."
+        
+        # Path to Inno Setup compiler
+        $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        
+        if (-not (Test-Path $iscc)) {
+          Write-Error "Inno Setup compiler not found at: $iscc"
+          exit 1
+        }
+        
+        # Compile installer
+        & $iscc "installer\CrushEaseInstaller.iss"
+        
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Installer compilation failed!"
+          exit 1
+        }
+        
+        Write-Host "Installer created successfully!"
+    
+    - name: Verify installer exists
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        $installerPath = "installer\Output\CrushEaseLedger-Setup-v$version.exe"
+        
+        if (Test-Path $installerPath) {
+          $fileSize = (Get-Item $installerPath).Length / 1MB
+          Write-Host "✓ Installer found: $installerPath"
+          Write-Host "✓ Size: $([math]::Round($fileSize, 2)) MB"
+        } else {
+          Write-Error "✗ Installer not found at: $installerPath"
+          exit 1
+        }
+    
+    - name: Generate Release Notes
+      id: release_notes
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        $tag = "${{ steps.get_version.outputs.TAG }}"
+        
+        # Try to get commits since last tag
+        $previousTag = git describe --tags --abbrev=0 HEAD^ 2>$null
+        
+        if ($previousTag) {
+          Write-Host "Getting changes since $previousTag..."
+          $commits = git log "$previousTag..HEAD" --pretty=format:"- %s" --no-merges
+        } else {
+          Write-Host "No previous tag found, using recent commits..."
+          $commits = git log -10 --pretty=format:"- %s" --no-merges
+        }
+        
+        # Create release notes
+        $releaseNotes = @"
+        ## CrushEase Ledger v$version
+        
+        ### What's New
+        
+        $commits
+        
+        ### Installation
+        
+        1. Download **CrushEaseLedger-Setup-v$version.exe** below
+        2. Run the installer (may require administrator privileges)
+        3. Follow the installation wizard
+        4. Launch CrushEase Ledger from Start Menu or Desktop
+        
+        ### Requirements
+        
+        - Windows 10/11 (64-bit)
+        - No .NET installation required (self-contained)
+        
+        ### Notes
+        
+        - This release includes automatic update checking
+        - Your data is automatically backed up
+        - All previous versions can be safely uninstalled before installing this version
+        
+        ---
+        
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$tag
+        "@
+        
+        # Save to file for GitHub Release
+        $releaseNotes | Out-File -FilePath "release_notes.md" -Encoding utf8
+        Write-Host "Release notes generated successfully!"
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: CrushEase Ledger v${{ steps.get_version.outputs.VERSION }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: |
+          installer/Output/CrushEaseLedger-Setup-v${{ steps.get_version.outputs.VERSION }}.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload installer as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CrushEaseLedger-Setup-v${{ steps.get_version.outputs.VERSION }}
+        path: installer/Output/CrushEaseLedger-Setup-v${{ steps.get_version.outputs.VERSION }}.exe
+        retention-days: 90
+    
+    - name: Build Summary
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "  Release Created Successfully!        " -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Version: v$version" -ForegroundColor Cyan
+        Write-Host "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.TAG }}" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "The installer has been uploaded to GitHub Releases!" -ForegroundColor Yellow
+        Write-Host "Users can now download and install this version." -ForegroundColor Yellow

@@ -165,6 +165,7 @@ public class CompanySettings
     public string InvoicePrefix { get; set; } = "INV";
     public string PaymentTerms { get; set; } = "Payment Due on Receipt";
     public string? TermsAndConditions { get; set; }
+    public float FontSizeScale { get; set; } = 1.0f;
     public DateTime UpdatedAt { get; set; }
 }
 
@@ -181,3 +182,50 @@ public class InvoiceMetadata
     public string GeneratedBy { get; set; } = "System";
     public string FilePath { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// File attachment for transactions
+/// </summary>
+public class Attachment
+{
+    public int AttachmentId { get; set; }
+    public string TransactionType { get; set; } = string.Empty; // "Sale", "Purchase", "Maintenance"
+    public int TransactionId { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public string? MimeType { get; set; }
+    public DateTime UploadedAt { get; set; }
+}
+
+/// <summary>
+/// Search result item for global search
+/// </summary>
+public class SearchResult
+{
+    public string Category { get; set; } = string.Empty; // "Sale", "Purchase", "Maintenance", "Vehicle", "Buyer", "Vendor", "Material"
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Subtitle { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
+    public DateTime? Date { get; set; }
+    public decimal? Amount { get; set; }
+}
+
+/// <summary>
+/// Autofill suggestion for data entry
+/// </summary>
+public class AutofillSuggestion
+{
+    public int MaterialId { get; set; }
+    public string MaterialName { get; set; } = string.Empty;
+    public int? BuyerId { get; set; }
+    public string? BuyerName { get; set; }
+    public int? VendorId { get; set; }
+    public string? VendorName { get; set; }
+    public decimal LastRate { get; set; }
+    public decimal LastQuantity { get; set; }
+    public string LastUnit { get; set; } = "CFT";
+    public DateTime LastTransactionDate { get; set; }
+}
+

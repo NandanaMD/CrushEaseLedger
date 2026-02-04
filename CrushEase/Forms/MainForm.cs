@@ -51,6 +51,15 @@ public partial class MainForm : Form
             case Keys.Control | Keys.Shift | Keys.M:
                 MenuMaterials_Click(this, EventArgs.Empty);
                 return true;
+            case Keys.Control | Keys.K:
+                MenuCalculator_Click(this, EventArgs.Empty);
+                return true;
+            case Keys.Control | Keys.Shift | Keys.T:
+                MenuTrash_Click(this, EventArgs.Empty);
+                return true;
+            case Keys.Control | Keys.F:
+                ShowGlobalSearch();
+                return true;
             case Keys.Control | Keys.T:
                 MenuViewTransactions_Click(this, EventArgs.Empty);
                 return true;
@@ -114,6 +123,10 @@ public partial class MainForm : Form
         LoadDashboard();
         Utils.ModernTheme.ApplyToForm(this);
         ResetIdleTimer(this, EventArgs.Empty);
+        
+        // Load version info and check for updates asynchronously
+        _ = LoadVersionInfoAsync();
+        _ = CheckForUpdatesAsync();
     }
     
     private void InitializeIdleTimer()
@@ -173,20 +186,37 @@ public partial class MainForm : Form
     
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        // Ask user if they want to backup before closing
+        var result = MessageBox.Show(
+            "Do you want to create a backup before closing?",
+            "Backup Confirmation",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
+        
+        if (result == DialogResult.Cancel)
+        {
+            e.Cancel = true;
+            return;
+        }
+        
+        if (result == DialogResult.Yes)
+        {
+            try
+            {
+                Services.BackupService.AutoBackup();
+                Logger.LogInfo("User-requested exit backup completed");
+                MessageBox.Show("Backup created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Exit backup failed");
+                MessageBox.Show("Backup failed, but you can still exit.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        
         base.OnFormClosing(e);
         
-        // Backup on exit for extra data safety
-        try
-        {
-            Services.BackupService.AutoBackup();
-            Logger.LogInfo("Exit backup completed");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exit backup failed");
-        }
-        
-        // Clean up timer
+        // Clean up timers
         _backupTimer?.Stop();
         _backupTimer?.Dispose();
         _idleTimer?.Stop();
@@ -448,7 +478,28 @@ public partial class MainForm : Form
     {
         using var dialog = new SaveFileDialog();
         dialog.Filter = "Database Files|*.db";
-        dialog.FileName = $"CrushEase_Backup_{DateTime.Now:yyyyMMdd}.db";
+        
+        // Get next backup number for consistency with auto-backups
+        string backupFolder = Config.BackupFolder;
+        int nextNumber = 1;
+        if (Directory.Exists(backupFolder))
+        {
+            var existingBackups = Directory.GetFiles(backupFolder, "CrushEaseBackup_*.db");
+            if (existingBackups.Length > 0)
+            {
+                var numbers = existingBackups
+                    .Select(f => {
+                        string name = Path.GetFileNameWithoutExtension(f);
+                        string numPart = name.Replace("CrushEaseBackup_", "");
+                        return int.TryParse(numPart, out int n) ? n : 0;
+                    })
+                    .Where(n => n > 0);
+                if (numbers.Any())
+                    nextNumber = numbers.Max() + 1;
+            }
+        }
+        
+        dialog.FileName = $"CrushEaseBackup_{nextNumber}.db";
         dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         
         if (dialog.ShowDialog() == DialogResult.OK)
@@ -502,6 +553,24 @@ public partial class MainForm : Form
     private void MenuExit_Click(object sender, EventArgs e)
     {
         Application.Exit();
+    }
+    
+    private void MenuAbout_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            using var aboutForm = new AboutForm();
+            aboutForm.ShowDialog(this);
+            
+            // Refresh version status after closing About dialog
+            _ = LoadVersionInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to open About dialog");
+            MessageBox.Show("Failed to open About dialog: " + ex.Message, "Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
     
     private void MenuCheckForUpdates_Click(object sender, EventArgs e)
@@ -639,6 +708,177 @@ public partial class MainForm : Form
             Logger.LogError(ex, "Failed to open company settings");
             MessageBox.Show("Failed to open company settings: " + ex.Message, "Error", 
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    // Calculator menu handler
+    private void MenuCalculator_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            var calcForm = new CalculatorHelper();
+            calcForm.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to open calculator");
+            MessageBox.Show("Failed to open calculator: " + ex.Message, "Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    // Trash viewer menu handler
+    private void MenuTrash_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            var trashForm = new TrashViewerForm();
+            if (trashForm.ShowDialog(this) == DialogResult.OK)
+            {
+                // Refresh dashboard if items were restored
+                LoadDashboard();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to open trash viewer");
+            MessageBox.Show("Failed to open trash viewer: " + ex.Message, "Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    // Global search dialog handler
+    private void ShowGlobalSearch()
+    {
+        try
+        {
+            using var searchDialog = new GlobalSearchDialog();
+            if (searchDialog.ShowDialog(this) == DialogResult.OK)
+            {
+                string searchText = searchDialog.SearchText;
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    var viewerForm = new TransactionViewerForm(searchText);
+                    viewerForm.ShowDialog(this);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to open global search");
+            MessageBox.Show("Failed to open search: " + ex.Message, "Error", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    // Search textbox handler
+    private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Enter)
+        {
+            string searchText = txtSearch?.Text?.Trim() ?? "";
+            if (string.IsNullOrEmpty(searchText))
+            {
+                ShowGlobalSearch();
+                return;
+            }
+            
+            try
+            {
+                // Open transaction viewer with search filter
+                var viewerForm = new TransactionViewerForm(searchText);
+                viewerForm.ShowDialog(this);
+                
+                // Clear the search box after search
+                if (txtSearch != null)
+                    txtSearch.Clear();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to search transactions");
+                MessageBox.Show("Failed to search: " + ex.Message, "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+    
+    // Load version information asynchronously
+    private async Task LoadVersionInfoAsync()
+    {
+        try
+        {
+            var versionStatus = await Services.VersionService.GetVersionStatusAsync();
+            
+            // Update UI on main thread
+            if (lblVersionStatus?.GetCurrentParent() != null)
+            {
+                lblVersionStatus.Text = versionStatus;
+                
+                // Check if update is available and colorize accordingly
+                var result = await Services.VersionService.CheckForUpdatesAsync();
+                if (result.IsUpdateAvailable)
+                {
+                    lblVersionStatus.ForeColor = Color.Orange;
+                    lblVersionStatus.ToolTipText = "Click Help > About to download the latest version";
+                }
+                else
+                {
+                    lblVersionStatus.ForeColor = Color.Green;
+                    lblVersionStatus.ToolTipText = "You are running the latest version";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load version info");
+            if (lblVersionStatus?.GetCurrentParent() != null)
+            {
+                lblVersionStatus.Text = $"Version: {Services.VersionService.CurrentVersionString}";
+                lblVersionStatus.ForeColor = SystemColors.ControlText;
+            }
+        }
+    }
+    
+    // Check for updates silently and show notification if available
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            // Wait a bit after startup to avoid overwhelming the user
+            await Task.Delay(3000);
+            
+            var result = await Services.VersionService.CheckForUpdatesAsync();
+            
+            if (result.CheckSuccessful && result.IsUpdateAvailable)
+            {
+                // Show update notification on UI thread
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => ShowUpdateNotification(result)));
+                }
+                else
+                {
+                    ShowUpdateNotification(result);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to check for updates on startup");
+            // Silent failure - don't bother the user
+        }
+    }
+    
+    private void ShowUpdateNotification(VersionCheckResult result)
+    {
+        try
+        {
+            using var updateForm = new UpdateNotificationForm(result);
+            updateForm.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to show update notification");
         }
     }
     

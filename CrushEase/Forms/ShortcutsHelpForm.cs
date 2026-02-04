@@ -27,6 +27,7 @@ namespace CrushEase.Forms
             AddShortcut("Ctrl+Shift+M", "Manage Materials");
             
             AddShortcutCategory("Quick Views");
+            AddShortcut("Ctrl+F", "Global Search");
             AddShortcut("Ctrl+T", "View All Transactions");
             AddShortcut("Ctrl+D", "View Master Data");
             
@@ -41,6 +42,11 @@ namespace CrushEase.Forms
             AddShortcut("Ctrl+B", "Backup Now");
             AddShortcut("Ctrl+Shift+O", "Restore from Backup");
             AddShortcut("Alt+F4", "Exit Application");
+            
+            AddShortcutCategory("Tools");
+            AddShortcut("Ctrl+K", "Calculator");
+            AddShortcut("Ctrl+Shift+T", "Trash / Deleted Items");
+            AddShortcut("Ctrl+L", "Lock Application");
             
             AddShortcutCategory("Form Operations");
             AddShortcut("Ctrl+S", "Save/Submit Entry");

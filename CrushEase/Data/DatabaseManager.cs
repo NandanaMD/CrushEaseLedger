@@ -39,8 +39,9 @@ public static class DatabaseManager
                 // Enable WAL mode
                 EnableWALMode();
                 
-                // Check schema version
-                CheckSchemaVersion();
+                // ALWAYS apply migrations for existing databases
+                Logger.LogInfo("Checking for pending database migrations...");
+                ApplyMigrations();
             }
             
             // Perform automatic backup
@@ -81,7 +82,18 @@ public static class DatabaseManager
             "INSERT INTO app_metadata (key, value) VALUES ('schema_version', @version)",
             connection))
         {
-            cmd.Parameters.AddWithValue("@version", Config.SchemaVersion.ToString());
+            cmd.Parameters.AddWithValue("@version", DatabaseMigration.CURRENT_SCHEMA_VERSION.ToString());
+            cmd.ExecuteNonQuery();
+        }
+        
+        // Insert default company settings row
+        using (var cmd = new SQLiteCommand(@"
+            INSERT INTO company_settings 
+            (settings_id, company_name, address, phone, email, invoice_prefix, payment_terms, font_size_scale, updated_at)
+            VALUES 
+            (1, '', '', '', '', 'INV', 'Payment Due on Receipt', 1.0, datetime('now'))",
+            connection))
+        {
             cmd.ExecuteNonQuery();
         }
         
@@ -102,7 +114,9 @@ public static class DatabaseManager
                 vehicle_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 vehicle_no TEXT NOT NULL UNIQUE COLLATE NOCASE,
                 is_active INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT
             );
             
             CREATE TABLE vendors (
@@ -111,7 +125,9 @@ public static class DatabaseManager
                 contact TEXT,
                 notes TEXT,
                 is_active INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT
             );
             
             CREATE TABLE buyers (
@@ -120,7 +136,9 @@ public static class DatabaseManager
                 contact TEXT,
                 notes TEXT,
                 is_active INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT
             );
             
             CREATE TABLE materials (
@@ -129,7 +147,10 @@ public static class DatabaseManager
                 unit TEXT DEFAULT 'Ton',
                 notes TEXT,
                 is_active INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                conversion_factor_mt_to_cft REAL DEFAULT 1.0,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT
             );
             
             -- Transaction tables
@@ -143,6 +164,11 @@ public static class DatabaseManager
                 rate REAL NOT NULL CHECK(rate >= 0),
                 amount REAL NOT NULL CHECK(amount >= 0),
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                input_unit TEXT DEFAULT 'CFT',
+                input_quantity REAL,
+                calculated_cft REAL,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT,
                 FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id),
                 FOREIGN KEY (buyer_id) REFERENCES buyers(buyer_id),
                 FOREIGN KEY (material_id) REFERENCES materials(material_id)
@@ -162,6 +188,11 @@ public static class DatabaseManager
                 amount REAL NOT NULL CHECK(amount >= 0),
                 vendor_site TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                input_unit TEXT DEFAULT 'CFT',
+                input_quantity REAL,
+                calculated_cft REAL,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT,
                 FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id),
                 FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id),
                 FOREIGN KEY (material_id) REFERENCES materials(material_id)
@@ -177,6 +208,8 @@ public static class DatabaseManager
                 description TEXT NOT NULL,
                 amount REAL NOT NULL CHECK(amount >= 0),
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_deleted INTEGER DEFAULT 0,
+                deleted_at TEXT,
                 FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id)
             );
             
@@ -196,8 +229,23 @@ public static class DatabaseManager
                 invoice_prefix TEXT DEFAULT 'INV',
                 payment_terms TEXT DEFAULT 'Payment Due on Receipt',
                 terms_and_conditions TEXT,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                font_size_scale REAL DEFAULT 1.0
             );
+            
+            -- Attachments table (Version 3)
+            CREATE TABLE attachments (
+                attachment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                transaction_type TEXT NOT NULL,
+                transaction_id INTEGER NOT NULL,
+                file_name TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                file_size INTEGER NOT NULL,
+                mime_type TEXT,
+                uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX idx_attachments_transaction ON attachments(transaction_type, transaction_id);
             
             -- Invoice metadata for tracking generated invoices
             CREATE TABLE invoice_metadata (
@@ -245,196 +293,11 @@ public static class DatabaseManager
         cmd.ExecuteNonQuery();
     }
     
-    private static void CheckSchemaVersion()
+    private static void ApplyMigrations()
     {
         using var connection = GetConnection();
         connection.Open();
-        
-        using var cmd = new SQLiteCommand(
-            "SELECT value FROM app_metadata WHERE key = 'schema_version'",
-            connection);
-        
-        var versionStr = cmd.ExecuteScalar()?.ToString();
-        if (int.TryParse(versionStr, out int dbVersion))
-        {
-            if (dbVersion < Config.SchemaVersion)
-            {
-                Logger.LogInfo($"Schema upgrade needed: {dbVersion} -> {Config.SchemaVersion}");
-                UpgradeSchema(connection, dbVersion, Config.SchemaVersion);
-            }
-        }
-    }
-    
-    private static void UpgradeSchema(SQLiteConnection connection, int fromVersion, int toVersion)
-    {
-        Logger.LogInfo($"Starting schema upgrade from version {fromVersion} to {toVersion}");
-        
-        using var transaction = connection.BeginTransaction();
-        try
-        {
-            // Upgrade from version 1 to version 2
-            if (fromVersion == 1 && toVersion >= 2)
-            {
-                Logger.LogInfo("Applying schema changes for version 2 (MT support)");
-                
-                // Add ConversionFactor_MT_to_CFT to materials table
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE materials ADD COLUMN conversion_factor_mt_to_cft REAL DEFAULT 1.0",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // Add InputUnit, InputQuantity, CalculatedCFT to sales table
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE sales ADD COLUMN input_unit TEXT DEFAULT 'CFT'",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE sales ADD COLUMN input_quantity REAL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE sales ADD COLUMN calculated_cft REAL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // Add InputUnit, InputQuantity, CalculatedCFT to purchases table
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE purchases ADD COLUMN input_unit TEXT DEFAULT 'CFT'",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE purchases ADD COLUMN input_quantity REAL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                using (var cmd = new SQLiteCommand(
-                    "ALTER TABLE purchases ADD COLUMN calculated_cft REAL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // Populate new fields for existing records (backward compatibility)
-                // For existing sales: InputUnit=CFT, InputQuantity=existing quantity, CalculatedCFT=existing quantity
-                using (var cmd = new SQLiteCommand(
-                    @"UPDATE sales 
-                      SET input_unit = 'CFT', 
-                          input_quantity = quantity, 
-                          calculated_cft = quantity 
-                      WHERE input_quantity IS NULL OR calculated_cft IS NULL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // For existing purchases: InputUnit=CFT, InputQuantity=existing quantity, CalculatedCFT=existing quantity
-                using (var cmd = new SQLiteCommand(
-                    @"UPDATE purchases 
-                      SET input_unit = 'CFT', 
-                          input_quantity = quantity, 
-                          calculated_cft = quantity 
-                      WHERE input_quantity IS NULL OR calculated_cft IS NULL",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                Logger.LogInfo("Schema version 2 changes applied successfully");
-            }
-            
-            // Upgrade from version 2 to version 3
-            if (fromVersion <= 2 && toVersion >= 3)
-            {
-                Logger.LogInfo("Applying schema changes for version 3 (Invoice system)");
-                
-                // Add company_settings table
-                using (var cmd = new SQLiteCommand(
-                    @"CREATE TABLE IF NOT EXISTS company_settings (
-                        settings_id INTEGER PRIMARY KEY CHECK(settings_id = 1),
-                        company_name TEXT NOT NULL DEFAULT '',
-                        address TEXT DEFAULT '',
-                        phone TEXT DEFAULT '',
-                        email TEXT DEFAULT '',
-                        gst_number TEXT,
-                        website TEXT,
-                        logo_image BLOB,
-                        invoice_prefix TEXT DEFAULT 'INV',
-                        payment_terms TEXT DEFAULT 'Payment Due on Receipt',
-                        terms_and_conditions TEXT,
-                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                    )",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // Add invoice_metadata table
-                using (var cmd = new SQLiteCommand(
-                    @"CREATE TABLE IF NOT EXISTS invoice_metadata (
-                        invoice_metadata_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        invoice_number TEXT NOT NULL UNIQUE,
-                        transaction_type TEXT NOT NULL,
-                        transaction_id INTEGER NOT NULL,
-                        generated_date TEXT DEFAULT CURRENT_TIMESTAMP,
-                        generated_by TEXT DEFAULT 'System',
-                        file_path TEXT
-                    )",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                // Create indexes
-                using (var cmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS idx_invoice_number ON invoice_metadata(invoice_number)",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                using (var cmd = new SQLiteCommand(
-                    "CREATE INDEX IF NOT EXISTS idx_invoice_transaction ON invoice_metadata(transaction_type, transaction_id)",
-                    connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                
-                Logger.LogInfo("Schema version 3 changes applied successfully");
-            }
-            
-            // Update schema version
-            using (var cmd = new SQLiteCommand(
-                "UPDATE app_metadata SET value = @version WHERE key = 'schema_version'",
-                connection))
-            {
-                cmd.Parameters.AddWithValue("@version", toVersion.ToString());
-                cmd.ExecuteNonQuery();
-            }
-            
-            transaction.Commit();
-            Logger.LogInfo($"Schema upgrade completed successfully to version {toVersion}");
-        }
-        catch (Exception ex)
-        {
-            transaction.Rollback();
-            Logger.LogError(ex, "Schema upgrade failed");
-            throw new Exception($"Failed to upgrade database schema from {fromVersion} to {toVersion}", ex);
-        }
+        DatabaseMigration.ApplyMigrations(connection);
     }
     
     public static void ExecuteNonQuery(string sql, params SQLiteParameter[] parameters)
@@ -480,13 +343,30 @@ public static class DatabaseManager
                 return (T)(object)Convert.ToDecimal(longValue);
             if (typeof(T) == typeof(int))
                 return (T)(object)Convert.ToInt32(longValue);
+            if (typeof(T) == typeof(long))
+                return (T)(object)longValue;
         }
         
-        if (result is double doubleValue && typeof(T) == typeof(decimal))
+        if (result is double doubleValue)
         {
-            return (T)(object)Convert.ToDecimal(doubleValue);
+            if (typeof(T) == typeof(decimal))
+                return (T)(object)Convert.ToDecimal(doubleValue);
         }
         
-        return (T)result;
+        if (result is int intValue && typeof(T) == typeof(int))
+        {
+            return (T)(object)intValue;
+        }
+        
+        // Use Convert.ChangeType as fallback for other type conversions
+        try
+        {
+            return (T)Convert.ChangeType(result, typeof(T));
+        }
+        catch
+        {
+            // If conversion fails, try direct cast
+            return (T)result;
+        }
     }
 }

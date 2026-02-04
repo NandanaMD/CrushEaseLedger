@@ -8,6 +8,24 @@ namespace CrushEase.Data;
 /// </summary>
 public static class SaleRepository
 {
+    // Helper method to safely convert SQLite numeric values to decimal
+    private static decimal SafeGetDecimal(System.Data.SQLite.SQLiteDataReader reader, int ordinal)
+    {
+        if (reader.IsDBNull(ordinal))
+            return 0m;
+            
+        var value = reader.GetValue(ordinal);
+        return value switch
+        {
+            long l => (decimal)l,
+            int i => (decimal)i,
+            double d => (decimal)d,
+            float f => (decimal)f,
+            decimal dec => dec,
+            _ => Convert.ToDecimal(value)
+        };
+    }
+    
     public static List<Sale> GetAll(DateTime? fromDate = null, DateTime? toDate = null, int? vehicleId = null)
     {
         var sales = new List<Sale>();
@@ -23,7 +41,7 @@ public static class SaleRepository
             INNER JOIN vehicles v ON s.vehicle_id = v.vehicle_id
             INNER JOIN buyers b ON s.buyer_id = b.buyer_id
             INNER JOIN materials m ON s.material_id = m.material_id
-            WHERE 1=1";
+            WHERE s.is_deleted = 0";
         
         if (fromDate.HasValue)
             sql += " AND s.sale_date >= @fromDate";
@@ -53,13 +71,13 @@ public static class SaleRepository
                 VehicleId = reader.GetInt32(2),
                 BuyerId = reader.GetInt32(3),
                 MaterialId = reader.GetInt32(4),
-                Quantity = Convert.ToDecimal(reader.GetValue(5)),
-                Rate = Convert.ToDecimal(reader.GetValue(6)),
-                Amount = Convert.ToDecimal(reader.GetValue(7)),
+                Quantity = SafeGetDecimal(reader, 5),
+                Rate = SafeGetDecimal(reader, 6),
+                Amount = SafeGetDecimal(reader, 7),
                 CreatedAt = DateTime.Parse(reader.GetString(8)),
                 InputUnit = reader.IsDBNull(9) ? "CFT" : reader.GetString(9),
-                InputQuantity = reader.IsDBNull(10) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(10)),
-                CalculatedCFT = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                InputQuantity = reader.IsDBNull(10) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 10),
+                CalculatedCFT = reader.IsDBNull(11) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 11),
                 VehicleNo = reader.GetString(12),
                 BuyerName = reader.GetString(13),
                 MaterialName = reader.GetString(14)
@@ -82,7 +100,7 @@ public static class SaleRepository
             INNER JOIN vehicles v ON s.vehicle_id = v.vehicle_id
             INNER JOIN buyers b ON s.buyer_id = b.buyer_id
             INNER JOIN materials m ON s.material_id = m.material_id
-            WHERE s.sale_id = @id";
+            WHERE s.sale_id = @id AND s.is_deleted = 0";
         
         using var cmd = new SQLiteCommand(sql, connection);
         cmd.Parameters.AddWithValue("@id", id);
@@ -97,13 +115,13 @@ public static class SaleRepository
                 VehicleId = reader.GetInt32(2),
                 BuyerId = reader.GetInt32(3),
                 MaterialId = reader.GetInt32(4),
-                Quantity = Convert.ToDecimal(reader.GetValue(5)),
-                Rate = Convert.ToDecimal(reader.GetValue(6)),
-                Amount = Convert.ToDecimal(reader.GetValue(7)),
+                Quantity = SafeGetDecimal(reader, 5),
+                Rate = SafeGetDecimal(reader, 6),
+                Amount = SafeGetDecimal(reader, 7),
                 CreatedAt = DateTime.Parse(reader.GetString(8)),
                 InputUnit = reader.IsDBNull(9) ? "CFT" : reader.GetString(9),
-                InputQuantity = reader.IsDBNull(10) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(10)),
-                CalculatedCFT = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
+                InputQuantity = reader.IsDBNull(10) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 10),
+                CalculatedCFT = reader.IsDBNull(11) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 11),
                 VehicleNo = reader.GetString(12),
                 BuyerName = reader.GetString(13),
                 MaterialName = reader.GetString(14)
@@ -170,8 +188,11 @@ public static class SaleRepository
     
     public static void Delete(int id)
     {
-        string sql = "DELETE FROM sales WHERE sale_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        // Soft delete - mark as deleted
+        string sql = "UPDATE sales SET is_deleted = 1, deleted_at = @deletedAt WHERE sale_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
@@ -182,7 +203,7 @@ public static class SaleRepository
     
     public static decimal GetTotalForDateRange(DateTime fromDate, DateTime toDate)
     {
-        string sql = "SELECT COALESCE(SUM(amount), 0) FROM sales WHERE sale_date >= @fromDate AND sale_date <= @toDate";
+        string sql = "SELECT COALESCE(SUM(amount), 0) FROM sales WHERE is_deleted = 0 AND sale_date >= @fromDate AND sale_date <= @toDate";
         
         return DatabaseManager.ExecuteScalar<decimal>(sql,
             new SQLiteParameter("@fromDate", fromDate.ToString("yyyy-MM-dd")),
@@ -195,6 +216,20 @@ public static class SaleRepository
 /// </summary>
 public static class PurchaseRepository
 {
+    private static decimal SafeGetDecimal(SQLiteDataReader reader, int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+        return value switch
+        {
+            long l => (decimal)l,
+            int i => (decimal)i,
+            double d => (decimal)d,
+            float f => (decimal)f,
+            decimal dec => dec,
+            _ => Convert.ToDecimal(value)
+        };
+    }
+
     public static List<Purchase> GetAll(DateTime? fromDate = null, DateTime? toDate = null, int? vehicleId = null)
     {
         var purchases = new List<Purchase>();
@@ -210,7 +245,7 @@ public static class PurchaseRepository
             INNER JOIN vehicles v ON p.vehicle_id = v.vehicle_id
             INNER JOIN vendors vd ON p.vendor_id = vd.vendor_id
             INNER JOIN materials m ON p.material_id = m.material_id
-            WHERE 1=1";
+            WHERE p.is_deleted = 0";
         
         if (fromDate.HasValue)
             sql += " AND p.purchase_date >= @fromDate";
@@ -240,14 +275,14 @@ public static class PurchaseRepository
                 VehicleId = reader.GetInt32(2),
                 VendorId = reader.GetInt32(3),
                 MaterialId = reader.GetInt32(4),
-                Quantity = Convert.ToDecimal(reader.GetValue(5)),
-                Rate = Convert.ToDecimal(reader.GetValue(6)),
-                Amount = Convert.ToDecimal(reader.GetValue(7)),
+                Quantity = SafeGetDecimal(reader, 5),
+                Rate = SafeGetDecimal(reader, 6),
+                Amount = SafeGetDecimal(reader, 7),
                 VendorSite = reader.IsDBNull(8) ? null : reader.GetString(8),
                 CreatedAt = DateTime.Parse(reader.GetString(9)),
                 InputUnit = reader.IsDBNull(10) ? "CFT" : reader.GetString(10),
-                InputQuantity = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
-                CalculatedCFT = reader.IsDBNull(12) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(12)),
+                InputQuantity = reader.IsDBNull(11) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 11),
+                CalculatedCFT = reader.IsDBNull(12) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 12),
                 VehicleNo = reader.GetString(13),
                 VendorName = reader.GetString(14),
                 MaterialName = reader.GetString(15)
@@ -285,14 +320,14 @@ public static class PurchaseRepository
                 VehicleId = reader.GetInt32(2),
                 VendorId = reader.GetInt32(3),
                 MaterialId = reader.GetInt32(4),
-                Quantity = Convert.ToDecimal(reader.GetValue(5)),
-                Rate = Convert.ToDecimal(reader.GetValue(6)),
-                Amount = Convert.ToDecimal(reader.GetValue(7)),
+                Quantity = SafeGetDecimal(reader, 5),
+                Rate = SafeGetDecimal(reader, 6),
+                Amount = SafeGetDecimal(reader, 7),
                 VendorSite = reader.IsDBNull(8) ? null : reader.GetString(8),
                 CreatedAt = DateTime.Parse(reader.GetString(9)),
                 InputUnit = reader.IsDBNull(10) ? "CFT" : reader.GetString(10),
-                InputQuantity = reader.IsDBNull(11) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(11)),
-                CalculatedCFT = reader.IsDBNull(12) ? Convert.ToDecimal(reader.GetValue(5)) : Convert.ToDecimal(reader.GetValue(12)),
+                InputQuantity = reader.IsDBNull(11) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 11),
+                CalculatedCFT = reader.IsDBNull(12) ? SafeGetDecimal(reader, 5) : SafeGetDecimal(reader, 12),
                 VehicleNo = reader.GetString(13),
                 VendorName = reader.GetString(14),
                 MaterialName = reader.GetString(15)
@@ -362,8 +397,11 @@ public static class PurchaseRepository
     
     public static void Delete(int id)
     {
-        string sql = "DELETE FROM purchases WHERE purchase_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        // Soft delete - mark as deleted
+        string sql = "UPDATE purchases SET is_deleted = 1, deleted_at = @deletedAt WHERE purchase_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
@@ -374,7 +412,7 @@ public static class PurchaseRepository
     
     public static decimal GetTotalForDateRange(DateTime fromDate, DateTime toDate)
     {
-        string sql = "SELECT COALESCE(SUM(amount), 0) FROM purchases WHERE purchase_date >= @fromDate AND purchase_date <= @toDate";
+        string sql = "SELECT COALESCE(SUM(amount), 0) FROM purchases WHERE is_deleted = 0 AND purchase_date >= @fromDate AND purchase_date <= @toDate";
         
         return DatabaseManager.ExecuteScalar<decimal>(sql,
             new SQLiteParameter("@fromDate", fromDate.ToString("yyyy-MM-dd")),
@@ -387,6 +425,20 @@ public static class PurchaseRepository
 /// </summary>
 public static class MaintenanceRepository
 {
+    private static decimal SafeGetDecimal(SQLiteDataReader reader, int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+        return value switch
+        {
+            long l => (decimal)l,
+            int i => (decimal)i,
+            double d => (decimal)d,
+            float f => (decimal)f,
+            decimal dec => dec,
+            _ => Convert.ToDecimal(value)
+        };
+    }
+
     public static List<Maintenance> GetAll(DateTime? fromDate = null, DateTime? toDate = null, int? vehicleId = null)
     {
         var maintenance = new List<Maintenance>();
@@ -395,10 +447,11 @@ public static class MaintenanceRepository
         connection.Open();
         
         string sql = @"
-            SELECT m.*, v.vehicle_no
+            SELECT m.maintenance_id, m.maintenance_date, m.vehicle_id, m.description, 
+                   m.amount, m.created_at, v.vehicle_no
             FROM maintenance m
             INNER JOIN vehicles v ON m.vehicle_id = v.vehicle_id
-            WHERE 1=1";
+            WHERE m.is_deleted = 0";
         
         if (fromDate.HasValue)
             sql += " AND m.maintenance_date >= @fromDate";
@@ -427,7 +480,7 @@ public static class MaintenanceRepository
                 MaintenanceDate = DateTime.Parse(reader.GetString(1)),
                 VehicleId = reader.GetInt32(2),
                 Description = reader.GetString(3),
-                Amount = Convert.ToDecimal(reader.GetValue(4)),
+                Amount = SafeGetDecimal(reader, 4),
                 CreatedAt = DateTime.Parse(reader.GetString(5)),
                 VehicleNo = reader.GetString(6)
             });
@@ -442,7 +495,8 @@ public static class MaintenanceRepository
         connection.Open();
         
         string sql = @"
-            SELECT m.*, v.vehicle_no
+            SELECT m.maintenance_id, m.maintenance_date, m.vehicle_id, m.description, 
+                   m.amount, m.created_at, v.vehicle_no
             FROM maintenance m
             INNER JOIN vehicles v ON m.vehicle_id = v.vehicle_id
             WHERE m.maintenance_id = @id";
@@ -459,7 +513,7 @@ public static class MaintenanceRepository
                 MaintenanceDate = DateTime.Parse(reader.GetString(1)),
                 VehicleId = reader.GetInt32(2),
                 Description = reader.GetString(3),
-                Amount = Convert.ToDecimal(reader.GetValue(4)),
+                Amount = SafeGetDecimal(reader, 4),
                 CreatedAt = DateTime.Parse(reader.GetString(5)),
                 VehicleNo = reader.GetString(6)
             };
@@ -507,8 +561,11 @@ public static class MaintenanceRepository
     
     public static void Delete(int id)
     {
-        string sql = "DELETE FROM maintenance WHERE maintenance_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        // Soft delete - mark as deleted
+        string sql = "UPDATE maintenance SET is_deleted = 1, deleted_at = @deletedAt WHERE maintenance_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
@@ -519,7 +576,7 @@ public static class MaintenanceRepository
     
     public static decimal GetTotalForDateRange(DateTime fromDate, DateTime toDate)
     {
-        string sql = "SELECT COALESCE(SUM(amount), 0) FROM maintenance WHERE maintenance_date >= @fromDate AND maintenance_date <= @toDate";
+        string sql = "SELECT COALESCE(SUM(amount), 0) FROM maintenance WHERE is_deleted = 0 AND maintenance_date >= @fromDate AND maintenance_date <= @toDate";
         
         return DatabaseManager.ExecuteScalar<decimal>(sql,
             new SQLiteParameter("@fromDate", fromDate.ToString("yyyy-MM-dd")),
@@ -568,12 +625,12 @@ public static class DashboardRepository
                 COALESCE(SUM(m.amount), 0) AS total_maintenance
             FROM vehicles v
             LEFT JOIN sales s ON v.vehicle_id = s.vehicle_id 
-                AND s.sale_date >= @fromDate AND s.sale_date <= @toDate
+                AND s.sale_date >= @fromDate AND s.sale_date <= @toDate AND s.is_deleted = 0
             LEFT JOIN purchases p ON v.vehicle_id = p.vehicle_id 
-                AND p.purchase_date >= @fromDate AND p.purchase_date <= @toDate
+                AND p.purchase_date >= @fromDate AND p.purchase_date <= @toDate AND p.is_deleted = 0
             LEFT JOIN maintenance m ON v.vehicle_id = m.vehicle_id 
-                AND m.maintenance_date >= @fromDate AND m.maintenance_date <= @toDate
-            WHERE v.is_active = 1
+                AND m.maintenance_date >= @fromDate AND m.maintenance_date <= @toDate AND m.is_deleted = 0
+            WHERE v.is_active = 1 AND v.is_deleted = 0
             GROUP BY v.vehicle_id, v.vehicle_no
             ORDER BY v.vehicle_no";
         

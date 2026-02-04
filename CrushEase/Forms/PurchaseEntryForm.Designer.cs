@@ -15,6 +15,7 @@ namespace CrushEase.Forms
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.lblPurchaseDate = new Label();
             this.dtpPurchaseDate = new DateTimePicker();
             this.lblVehicle = new Label();
@@ -28,6 +29,8 @@ namespace CrushEase.Forms
             this.txtVendorSite = new TextBox();
             this.lblUnit = new Label();
             this.cmbUnit = new ComboBox();
+            this.contextMenuEntry = new ContextMenuStrip(this.components);
+            this.menuItemPrintReceipt = new ToolStripMenuItem();
             this.lblQuantity = new Label();
             this.txtQuantity = new TextBox();
             this.lblCalculatedCFT = new Label();
@@ -38,10 +41,12 @@ namespace CrushEase.Forms
             this.txtAmount = new TextBox();
             this.btnSave = new Button();
             this.btnSaveAndNew = new Button();
+            this.btnPrintReceipt = new Button();
             this.btnClose = new Button();
             this.groupBox = new GroupBox();
             
             this.groupBox.SuspendLayout();
+            this.contextMenuEntry.SuspendLayout();
             this.SuspendLayout();
             
             // groupBox
@@ -270,6 +275,30 @@ namespace CrushEase.Forms
             this.btnSaveAndNew.UseVisualStyleBackColor = true;
             this.btnSaveAndNew.Click += new EventHandler(this.BtnSaveAndNew_Click);
             
+            // btnPrintReceipt
+            this.btnPrintReceipt.Location = new Point(12, 390);
+            this.btnPrintReceipt.Name = "btnPrintReceipt";
+            this.btnPrintReceipt.Size = new Size(110, 35);
+            this.btnPrintReceipt.TabIndex = 4;
+            this.btnPrintReceipt.Text = "Print Receipt";
+            this.btnPrintReceipt.UseVisualStyleBackColor = true;
+            this.btnPrintReceipt.Enabled = false;
+            this.btnPrintReceipt.Click += new EventHandler(this.BtnPrintReceipt_Click);
+            
+            // contextMenuEntry
+            this.contextMenuEntry.Items.AddRange(new ToolStripItem[] {
+                this.menuItemPrintReceipt
+            });
+            this.contextMenuEntry.Name = "contextMenuEntry";
+            this.contextMenuEntry.Size = new Size(181, 26);
+            this.contextMenuEntry.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuEntry_Opening);
+            
+            // menuItemPrintReceipt
+            this.menuItemPrintReceipt.Name = "menuItemPrintReceipt";
+            this.menuItemPrintReceipt.Size = new Size(180, 22);
+            this.menuItemPrintReceipt.Text = "Print Receipt";
+            this.menuItemPrintReceipt.Click += new EventHandler(this.BtnPrintReceipt_Click);
+            
             // btnClose
             this.btnClose.Location = new Point(482, 390);
             this.btnClose.Name = "btnClose";
@@ -283,7 +312,9 @@ namespace CrushEase.Forms
             this.AutoScaleDimensions = new SizeF(7F, 15F);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.ClientSize = new Size(584, 437);
+            this.ContextMenuStrip = this.contextMenuEntry;
             this.Controls.Add(this.btnClose);
+            this.Controls.Add(this.btnPrintReceipt);
             this.Controls.Add(this.btnSaveAndNew);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.groupBox);
@@ -296,6 +327,7 @@ namespace CrushEase.Forms
             this.Load += new EventHandler(this.PurchaseEntryForm_Load);
             this.groupBox.ResumeLayout(false);
             this.groupBox.PerformLayout();
+            this.contextMenuEntry.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -322,7 +354,10 @@ namespace CrushEase.Forms
         private TextBox txtAmount;
         private Button btnSave;
         private Button btnSaveAndNew;
+        private Button btnPrintReceipt;
         private Button btnClose;
         private GroupBox groupBox;
+        private ContextMenuStrip contextMenuEntry;
+        private ToolStripMenuItem menuItemPrintReceipt;
     }
 }

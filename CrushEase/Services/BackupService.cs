@@ -4,12 +4,12 @@ using CrushEase.Utils;
 namespace CrushEase.Services;
 
 /// <summary>
-/// Handles automatic and manual database backups
-/// Auto backups occur:
-/// - On application startup (daily/weekly)
-/// - Every 5 minutes during runtime
-/// - After each transaction/master data change
-/// - On application exit
+/// Handles automatic and manual database backups with sequential numbering
+/// Sequential backup system:
+/// - CrushEaseBackup_1.db, CrushEaseBackup_2.db, etc.
+/// - Highest number = latest backup
+/// - Keeps last 30 backups
+/// - Backups occur on startup (daily) and after transactions
 /// </summary>
 public static class BackupService
 {
@@ -17,11 +17,20 @@ public static class BackupService
     private static DateTime _lastTransactionBackup = DateTime.MinValue;
     private static readonly TimeSpan MinBackupInterval = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan MinTransactionBackupInterval = TimeSpan.FromMinutes(2);
+    private const int MaxBackupsToKeep = 30;
+    private static bool _legacyBackupsCleanedUp = false;
     
     public static void AutoBackup()
     {
         try
         {
+            // Clean up legacy timestamp-based backups on first run
+            if (!_legacyBackupsCleanedUp)
+            {
+                CleanupLegacyBackups();
+                _legacyBackupsCleanedUp = true;
+            }
+            
             // Prevent too frequent backups (minimum 30 minutes between scheduled auto backups)
             if (DateTime.Now - _lastAutoBackup < MinBackupInterval)
             {
@@ -36,49 +45,10 @@ public static class BackupService
             string backupFolder = Config.BackupFolder;
             Directory.CreateDirectory(backupFolder);
             
-            // Daily backup (keep last 7 days)
-            string dailyBackup = Path.Combine(backupFolder, $"crushease_daily_{DateTime.Now:yyyyMMdd}.db");
-            if (!File.Exists(dailyBackup))
-            {                // Checkpoint WAL to ensure all data is in the main database file
-                CheckpointDatabase();
-                                File.Copy(dbPath, dailyBackup, true);
-                Logger.LogInfo($"Daily backup created: {dailyBackup}");
-                _lastAutoBackup = DateTime.Now;
-            }
-            
-            // Cleanup old daily backups (keep last 14 days for better safety)
-            var oldDailyBackups = Directory.GetFiles(backupFolder, "crushease_daily_*.db")
-                                          .OrderByDescending(f => f)
-                                          .Skip(14);
-            foreach (var file in oldDailyBackups)
-            {
-                File.Delete(file);
-                Logger.LogInfo($"Deleted old daily backup: {file}");
-            }
-            
-            // Weekly backup (create on Sundays, keep last 8 weeks)
-            if (DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
-            {
-                string weeklyBackup = Path.Combine(backupFolder, $"crushease_weekly_{DateTime.Now:yyyyMMdd}.db");
-                if (!File.Exists(weeklyBackup))
-                {// Checkpoint WAL to ensure all data is in the main database file
-                    CheckpointDatabase();
-                    
-                    
-                    File.Copy(dbPath, weeklyBackup, true);
-                    Logger.LogInfo($"Weekly backup created: {weeklyBackup}");
-                    _lastAutoBackup = DateTime.Now;
-                }
-                
-                var oldWeeklyBackups = Directory.GetFiles(backupFolder, "crushease_weekly_*.db")
-                                               .OrderByDescending(f => f)
-                                               .Skip(8);
-                foreach (var file in oldWeeklyBackups)
-                {
-                    File.Delete(file);
-                    Logger.LogInfo($"Deleted old weekly backup: {file}");
-                }
-            }
+            // Create sequential backup
+            CheckpointDatabase();
+            CreateSequentialBackup(dbPath, backupFolder);
+            _lastAutoBackup = DateTime.Now;
         }
         catch (Exception ex)
         {
@@ -130,29 +100,150 @@ public static class BackupService
             string backupFolder = Config.BackupFolder;
             Directory.CreateDirectory(backupFolder);
             
-            // Checkpoint WAL to ensure all data is in the main database file
+            // Create sequential backup
             CheckpointDatabase();
-            
-            
-            // Transaction backup (keep last 10)
-            string transactionBackup = Path.Combine(backupFolder, $"crushease_transaction_{DateTime.Now:yyyyMMdd_HHmmss}.db");
-            File.Copy(dbPath, transactionBackup, true);
-            Logger.LogInfo($"Transaction backup created: {transactionBackup}");
+            CreateSequentialBackup(dbPath, backupFolder);
             _lastTransactionBackup = DateTime.Now;
-            
-            // Cleanup old transaction backups (keep last 10)
-            var oldTransactionBackups = Directory.GetFiles(backupFolder, "crushease_transaction_*.db")
-                                          .OrderByDescending(f => f)
-                                          .Skip(10);
-            foreach (var file in oldTransactionBackups)
-            {
-                File.Delete(file);
-            }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Transaction backup failed");
             // Don't throw - backup failure shouldn't prevent data operations
+        }
+    }
+    
+    /// <summary>
+    /// Creates a new sequential backup and manages cleanup
+    /// </summary>
+    private static void CreateSequentialBackup(string dbPath, string backupFolder)
+    {
+        // Get next backup number
+        int nextNumber = GetNextBackupNumber(backupFolder);
+        
+        // Create new backup with sequential number
+        string backupPath = Path.Combine(backupFolder, $"CrushEaseBackup_{nextNumber}.db");
+        File.Copy(dbPath, backupPath, true);
+        Logger.LogInfo($"Sequential backup created: CrushEaseBackup_{nextNumber}.db");
+        
+        // Cleanup old backups (keep last 30)
+        CleanupOldBackups(backupFolder);
+    }
+    
+    /// <summary>
+    /// Gets the next backup number in sequence
+    /// </summary>
+    private static int GetNextBackupNumber(string backupFolder)
+    {
+        try
+        {
+            if (!Directory.Exists(backupFolder))
+                return 1;
+            
+            var backupFiles = Directory.GetFiles(backupFolder, "CrushEaseBackup_*.db");
+            if (backupFiles.Length == 0)
+                return 1;
+            
+            int maxNumber = 0;
+            foreach (var file in backupFiles)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file);
+                // Extract number from "CrushEaseBackup_123"
+                string numberPart = fileName.Replace("CrushEaseBackup_", "");
+                if (int.TryParse(numberPart, out int number))
+                {
+                    maxNumber = Math.Max(maxNumber, number);
+                }
+            }
+            
+            return maxNumber + 1;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error getting next backup number");
+            return 1;
+        }
+    }
+    
+    /// <summary>
+    /// Removes old sequential backups, keeping only the last 30
+    /// </summary>
+    private static void CleanupOldBackups(string backupFolder)
+    {
+        try
+        {
+            var backupFiles = Directory.GetFiles(backupFolder, "CrushEaseBackup_*.db")
+                .Select(f => new { Path = f, Number = ExtractBackupNumber(f) })
+                .Where(x => x.Number > 0)
+                .OrderByDescending(x => x.Number)
+                .Skip(MaxBackupsToKeep);
+            
+            foreach (var backup in backupFiles)
+            {
+                File.Delete(backup.Path);
+                Logger.LogInfo($"Deleted old backup: {Path.GetFileName(backup.Path)}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error cleaning up old backups");
+        }
+    }
+    
+    /// <summary>
+    /// Extracts the backup number from a filename
+    /// </summary>
+    private static int ExtractBackupNumber(string filePath)
+    {
+        try
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string numberPart = fileName.Replace("CrushEaseBackup_", "");
+            return int.TryParse(numberPart, out int number) ? number : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+    
+    /// <summary>
+    /// Cleans up old timestamp-based backup files on first run
+    /// </summary>
+    private static void CleanupLegacyBackups()
+    {
+        try
+        {
+            string backupFolder = Config.BackupFolder;
+            if (!Directory.Exists(backupFolder))
+                return;
+            
+            // Find all legacy backup files
+            var legacyPatterns = new[] { 
+                "crushease_daily_*.db", 
+                "crushease_weekly_*.db", 
+                "crushease_transaction_*.db",
+                "pre_restore_*.db"
+            };
+            
+            int deletedCount = 0;
+            foreach (var pattern in legacyPatterns)
+            {
+                var files = Directory.GetFiles(backupFolder, pattern);
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                    deletedCount++;
+                }
+            }
+            
+            if (deletedCount > 0)
+            {
+                Logger.LogInfo($"Cleaned up {deletedCount} legacy timestamp-based backup files");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error cleaning up legacy backups");
         }
     }
     
@@ -243,18 +334,20 @@ public static class BackupService
             if (!Directory.Exists(backupFolder))
                 return backups;
             
-            var files = Directory.GetFiles(backupFolder, "crushease_*.db")
-                                .OrderByDescending(f => f);
+            var files = Directory.GetFiles(backupFolder, "CrushEaseBackup_*.db")
+                .Select(f => new { Path = f, Number = ExtractBackupNumber(f), Info = new FileInfo(f) })
+                .Where(x => x.Number > 0)
+                .OrderByDescending(x => x.Number);
             
             foreach (var file in files)
             {
-                var info = new FileInfo(file);
                 backups.Add(new BackupInfo
                 {
-                    FilePath = file,
-                    FileName = info.Name,
-                    CreatedDate = info.CreationTime,
-                    Size = info.Length
+                    FilePath = file.Path,
+                    FileName = file.Info.Name,
+                    BackupNumber = file.Number,
+                    CreatedDate = file.Info.CreationTime,
+                    Size = file.Info.Length
                 });
             }
         }
@@ -289,8 +382,9 @@ public class BackupInfo
 {
     public string FilePath { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
+    public int BackupNumber { get; set; }
     public DateTime CreatedDate { get; set; }
     public long Size { get; set; }
     
-    public string DisplayName => $"{FileName} ({CreatedDate:dd-MMM-yyyy HH:mm}) - {Size / 1024:N0} KB";
+    public string DisplayName => $"Backup #{BackupNumber} ({CreatedDate:dd-MMM-yyyy HH:mm}) - {Size / 1024:N0} KB";
 }

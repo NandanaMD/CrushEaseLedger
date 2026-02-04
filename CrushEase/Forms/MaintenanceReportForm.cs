@@ -17,6 +17,16 @@ public partial class MaintenanceReportForm : Form
         _currentData = new List<Maintenance>();
     }
     
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Delete)
+        {
+            BtnDelete_Click(this, EventArgs.Empty);
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+    
     private void MaintenanceReportForm_Load(object sender, EventArgs e)
     {
         // Set default date range to current month
@@ -209,14 +219,13 @@ public partial class MaintenanceReportForm : Form
     {
         if (dgvReport.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a maintenance record to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select maintenance record(s) to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var maintenance = (Maintenance)dgvReport.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvReport.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this maintenance?\\n\\nDate: {maintenance.MaintenanceDate:dd-MMM-yyyy}\\nVehicle: {maintenance.VehicleNo}\\nDescription: {maintenance.Description}\\nAmount: ₹{maintenance.Amount:N2}",
+            $"Are you sure you want to delete {count} maintenance record(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
@@ -226,13 +235,20 @@ public partial class MaintenanceReportForm : Form
         
         try
         {
-            MaintenanceRepository.Delete(maintenance.MaintenanceId);
+            int successCount = 0;
+            foreach (DataGridViewRow row in dgvReport.SelectedRows)
+            {
+                var maintenance = (Maintenance)row.DataBoundItem;
+                MaintenanceRepository.Delete(maintenance.MaintenanceId);
+                successCount++;
+            }
+            
             LoadReport();
-            MessageBox.Show("Maintenance deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"{successCount} maintenance record(s) deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to delete maintenance");
+            Logger.LogError(ex, "Failed to delete maintenance record(s)");
             MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }

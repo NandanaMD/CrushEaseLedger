@@ -21,6 +21,16 @@ public partial class SalesReportForm : Form
         _currentData = new List<Sale>();
     }
     
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Delete)
+        {
+            BtnDelete_Click(this, EventArgs.Empty);
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+    
     private void SalesReportForm_Load(object sender, EventArgs e)
     {
         // Set default date range to current month
@@ -270,14 +280,13 @@ public partial class SalesReportForm : Form
     {
         if (dgvReport.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a sale to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select sale(s) to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var sale = (Sale)dgvReport.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvReport.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this sale?\\n\\nDate: {sale.SaleDate:dd-MMM-yyyy}\\nVehicle: {sale.VehicleNo}\\nBuyer: {sale.BuyerName}\\nAmount: ₹{sale.Amount:N2}",
+            $"Are you sure you want to delete {count} sale(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
@@ -287,13 +296,20 @@ public partial class SalesReportForm : Form
         
         try
         {
-            SaleRepository.Delete(sale.SaleId);
+            int successCount = 0;
+            foreach (DataGridViewRow row in dgvReport.SelectedRows)
+            {
+                var sale = (Sale)row.DataBoundItem;
+                SaleRepository.Delete(sale.SaleId);
+                successCount++;
+            }
+            
             LoadReport();
-            MessageBox.Show("Sale deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"{successCount} sale(s) deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to delete sale");
+            Logger.LogError(ex, "Failed to delete sale(s)");
             MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
@@ -314,7 +330,16 @@ public partial class SalesReportForm : Form
         Cursor = Cursors.WaitCursor;
         try
         {
-            var result = Services.InvoiceGenerator.GenerateSaleInvoice(selectedSale);
+            // Reload the sale from database to ensure all data is properly loaded
+            var sale = SaleRepository.GetById(selectedSale.SaleId);
+            if (sale == null)
+            {
+                MessageBox.Show("Sale not found.", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            var result = Services.InvoiceGenerator.GenerateSaleInvoice(sale);
             
             if (result.Success)
             {

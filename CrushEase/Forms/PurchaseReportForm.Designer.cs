@@ -15,6 +15,7 @@ namespace CrushEase.Forms
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.groupFilters = new GroupBox();
             this.lblFromDate = new Label();
             this.dtpFromDate = new DateTimePicker();
@@ -28,14 +29,18 @@ namespace CrushEase.Forms
             this.cmbVendor = new ComboBox();
             this.btnGenerate = new Button();
             this.dgvReport = new DataGridView();
+            this.contextMenuReport = new ContextMenuStrip(this.components);
+            this.menuItemPrintReceipt = new ToolStripMenuItem();
             this.lblTotal = new Label();
             this.btnEdit = new Button();
             this.btnDelete = new Button();
+            this.btnPrintReceipt = new Button();
             this.btnExport = new Button();
             this.btnClose = new Button();
             
             this.groupFilters.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvReport).BeginInit();
+            this.contextMenuReport.SuspendLayout();
             this.SuspendLayout();
             
             // groupFilters
@@ -148,6 +153,7 @@ namespace CrushEase.Forms
             // dgvReport
             this.dgvReport.AllowUserToAddRows = false;
             this.dgvReport.AllowUserToDeleteRows = false;
+            this.dgvReport.ContextMenuStrip = this.contextMenuReport;
             this.dgvReport.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvReport.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvReport.Location = new Point(12, 120);
@@ -155,8 +161,22 @@ namespace CrushEase.Forms
             this.dgvReport.ReadOnly = true;
             this.dgvReport.RowHeadersVisible = false;
             this.dgvReport.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvReport.MultiSelect = true;
             this.dgvReport.Size = new Size(976, 400);
             this.dgvReport.TabIndex = 1;
+            
+            // contextMenuReport
+            this.contextMenuReport.Items.AddRange(new ToolStripItem[] {
+                this.menuItemPrintReceipt
+            });
+            this.contextMenuReport.Name = "contextMenuReport";
+            this.contextMenuReport.Size = new Size(181, 26);
+            
+            // menuItemPrintReceipt
+            this.menuItemPrintReceipt.Name = "menuItemPrintReceipt";
+            this.menuItemPrintReceipt.Size = new Size(180, 22);
+            this.menuItemPrintReceipt.Text = "Print Receipt";
+            this.menuItemPrintReceipt.Click += new EventHandler(this.BtnPrintReceipt_Click);
             
             // lblTotal
             this.lblTotal.AutoSize = true;
@@ -179,7 +199,7 @@ namespace CrushEase.Forms
             
             // btnDelete
             this.btnDelete.Font = new Font("Segoe UI", 9F);
-            this.btnDelete.Location = new Point(518, 530);
+            this.btnDelete.Location = new Point(358, 530);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new Size(150, 35);
             this.btnDelete.TabIndex = 4;
@@ -187,12 +207,22 @@ namespace CrushEase.Forms
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Click += new EventHandler(this.BtnDelete_Click);
             
+            // btnPrintReceipt
+            this.btnPrintReceipt.Font = new Font("Segoe UI", 9F);
+            this.btnPrintReceipt.Location = new Point(518, 530);
+            this.btnPrintReceipt.Name = "btnPrintReceipt";
+            this.btnPrintReceipt.Size = new Size(150, 35);
+            this.btnPrintReceipt.TabIndex = 5;
+            this.btnPrintReceipt.Text = "Print Receipt";
+            this.btnPrintReceipt.UseVisualStyleBackColor = true;
+            this.btnPrintReceipt.Click += new EventHandler(this.BtnPrintReceipt_Click);
+            
             // btnExport
             this.btnExport.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             this.btnExport.Location = new Point(678, 530);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new Size(150, 35);
-            this.btnExport.TabIndex = 5;
+            this.btnExport.TabIndex = 6;
             this.btnExport.Text = "Export to Excel";
             this.btnExport.UseVisualStyleBackColor = true;
             this.btnExport.Click += new EventHandler(this.BtnExport_Click);
@@ -201,7 +231,7 @@ namespace CrushEase.Forms
             this.btnClose.Location = new Point(838, 530);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new Size(150, 35);
-            this.btnClose.TabIndex = 6;
+            this.btnClose.TabIndex = 7;
             this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new EventHandler(this.BtnClose_Click);
@@ -212,6 +242,7 @@ namespace CrushEase.Forms
             this.ClientSize = new Size(1000, 577);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnExport);
+            this.Controls.Add(this.btnPrintReceipt);
             this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.btnEdit);
             this.Controls.Add(this.lblTotal);
@@ -226,6 +257,7 @@ namespace CrushEase.Forms
             this.groupFilters.ResumeLayout(false);
             this.groupFilters.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvReport).EndInit();
+            this.contextMenuReport.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -243,9 +275,12 @@ namespace CrushEase.Forms
         private ComboBox cmbVendor;
         private Button btnGenerate;
         private DataGridView dgvReport;
+        private ContextMenuStrip contextMenuReport;
+        private ToolStripMenuItem menuItemPrintReceipt;
         private Label lblTotal;
         private Button btnEdit;
         private Button btnDelete;
+        private Button btnPrintReceipt;
         private Button btnExport;
         private Button btnClose;
     }

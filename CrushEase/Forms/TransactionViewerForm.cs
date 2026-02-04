@@ -9,9 +9,38 @@ namespace CrushEase.Forms;
 /// </summary>
 public partial class TransactionViewerForm : Form
 {
+    private string _searchText = "";
+    
     public TransactionViewerForm()
     {
         InitializeComponent();
+    }
+    
+    public TransactionViewerForm(string searchText) : this()
+    {
+        _searchText = searchText ?? "";
+    }
+    
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Delete)
+        {
+            // Handle Delete key based on active tab
+            if (tabControl.SelectedTab == tabSales)
+            {
+                BtnDeleteSale_Click(this, EventArgs.Empty);
+            }
+            else if (tabControl.SelectedTab == tabPurchases)
+            {
+                BtnDeletePurchase_Click(this, EventArgs.Empty);
+            }
+            else if (tabControl.SelectedTab == tabMaintenance)
+            {
+                BtnDeleteMaintenance_Click(this, EventArgs.Empty);
+            }
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
     }
     
     private void TransactionViewerForm_Load(object sender, EventArgs e)
@@ -23,6 +52,14 @@ public partial class TransactionViewerForm : Form
         dtpPurchasesTo.Value = DateTime.Now;
         dtpMaintenanceFrom.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
         dtpMaintenanceTo.Value = DateTime.Now;
+        
+        // Set initial search text if provided
+        if (!string.IsNullOrEmpty(_searchText))
+        {
+            txtSalesSearch.Text = _searchText;
+            txtPurchasesSearch.Text = _searchText;
+            txtMaintenanceSearch.Text = _searchText;
+        }
         
         // Load dropdown data
         LoadDropdowns();
@@ -71,6 +108,19 @@ public partial class TransactionViewerForm : Form
         int? vehicleId = (cmbSalesVehicle.SelectedValue is int value && value > 0) ? value : null;
         
         var sales = SaleRepository.GetAll(fromDate, toDate, vehicleId);
+        
+        // Filter by search text
+        string searchText = txtSalesSearch?.Text?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            sales = sales.Where(s => 
+                (s.VehicleNo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (s.BuyerName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (s.MaterialName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                s.Amount.ToString().Contains(searchText)
+            ).ToList();
+        }
+        
         dgvSales.DataSource = sales;
         FormatSalesGrid();
         lblSalesCount.Text = $"Total: {sales.Count} | Amount: ₹{sales.Sum(s => s.Amount):N2}";
@@ -83,6 +133,19 @@ public partial class TransactionViewerForm : Form
         int? vehicleId = (cmbPurchasesVehicle.SelectedValue is int value && value > 0) ? value : null;
         
         var purchases = PurchaseRepository.GetAll(fromDate, toDate, vehicleId);
+        
+        // Filter by search text
+        string searchText = txtPurchasesSearch?.Text?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            purchases = purchases.Where(p => 
+                (p.VehicleNo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (p.VendorName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (p.MaterialName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                p.Amount.ToString().Contains(searchText)
+            ).ToList();
+        }
+        
         dgvPurchases.DataSource = purchases;
         FormatPurchasesGrid();
         lblPurchasesCount.Text = $"Total: {purchases.Count} | Amount: ₹{purchases.Sum(p => p.Amount):N2}";
@@ -95,6 +158,18 @@ public partial class TransactionViewerForm : Form
         int? vehicleId = (cmbMaintenanceVehicle.SelectedValue is int value && value > 0) ? value : null;
         
         var maintenance = MaintenanceRepository.GetAll(fromDate, toDate, vehicleId);
+        
+        // Filter by search text
+        string searchText = txtMaintenanceSearch?.Text?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            maintenance = maintenance.Where(m => 
+                (m.VehicleNo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Description?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                m.Amount.ToString().Contains(searchText)
+            ).ToList();
+        }
+        
         dgvMaintenance.DataSource = maintenance;
         FormatMaintenanceGrid();
         lblMaintenanceCount.Text = $"Total: {maintenance.Count} | Amount: ₹{maintenance.Sum(m => m.Amount):N2}";
@@ -349,6 +424,22 @@ public partial class TransactionViewerForm : Form
         LoadMaintenance();
     }
     
+    // Search textbox event handlers
+    private void TxtSalesSearch_TextChanged(object sender, EventArgs e)
+    {
+        LoadSales();
+    }
+    
+    private void TxtPurchasesSearch_TextChanged(object sender, EventArgs e)
+    {
+        LoadPurchases();
+    }
+    
+    private void TxtMaintenanceSearch_TextChanged(object sender, EventArgs e)
+    {
+        LoadMaintenance();
+    }
+    
     // Edit handlers
     private void BtnEditSale_Click(object sender, EventArgs e)
     {
@@ -397,18 +488,13 @@ public partial class TransactionViewerForm : Form
     {
         if (dgvSales.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a sale to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select sale(s) to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var sale = (Sale)dgvSales.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvSales.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this sale?\n\n" +
-            $"Date: {sale.SaleDate:dd-MMM-yyyy}\n" +
-            $"Vehicle: {sale.VehicleNo}\n" +
-            $"Buyer: {sale.BuyerName}\n" +
-            $"Amount: ₹{sale.Amount:N2}",
+            $"Are you sure you want to delete {count} sale(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
@@ -417,14 +503,20 @@ public partial class TransactionViewerForm : Form
         {
             try
             {
-                SaleRepository.Delete(sale.SaleId);
-                MessageBox.Show("Sale deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                int successCount = 0;
+                foreach (DataGridViewRow row in dgvSales.SelectedRows)
+                {
+                    var sale = (Sale)row.DataBoundItem;
+                    SaleRepository.Delete(sale.SaleId);
+                    successCount++;
+                }
+                MessageBox.Show($"{successCount} sale(s) deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadSales();
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to delete sale");
-                MessageBox.Show("Failed to delete sale: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Logger.LogError(ex, "Failed to delete sale(s)");
+                MessageBox.Show("Failed to delete sale(s): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
@@ -433,18 +525,13 @@ public partial class TransactionViewerForm : Form
     {
         if (dgvPurchases.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a purchase to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select purchase(s) to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var purchase = (Purchase)dgvPurchases.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvPurchases.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this purchase?\n\n" +
-            $"Date: {purchase.PurchaseDate:dd-MMM-yyyy}\n" +
-            $"Vehicle: {purchase.VehicleNo}\n" +
-            $"Vendor: {purchase.VendorName}\n" +
-            $"Amount: ₹{purchase.Amount:N2}",
+            $"Are you sure you want to delete {count} purchase(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
@@ -453,14 +540,20 @@ public partial class TransactionViewerForm : Form
         {
             try
             {
-                PurchaseRepository.Delete(purchase.PurchaseId);
-                MessageBox.Show("Purchase deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                int successCount = 0;
+                foreach (DataGridViewRow row in dgvPurchases.SelectedRows)
+                {
+                    var purchase = (Purchase)row.DataBoundItem;
+                    PurchaseRepository.Delete(purchase.PurchaseId);
+                    successCount++;
+                }
+                MessageBox.Show($"{successCount} purchase(s) deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadPurchases();
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to delete purchase");
-                MessageBox.Show("Failed to delete purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Logger.LogError(ex, "Failed to delete purchase(s)");
+                MessageBox.Show("Failed to delete purchase(s): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
@@ -469,18 +562,13 @@ public partial class TransactionViewerForm : Form
     {
         if (dgvMaintenance.SelectedRows.Count == 0)
         {
-            MessageBox.Show("Please select a maintenance record to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Please select maintenance record(s) to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         
-        var maintenance = (Maintenance)dgvMaintenance.SelectedRows[0].DataBoundItem;
-        
+        int count = dgvMaintenance.SelectedRows.Count;
         var result = MessageBox.Show(
-            $"Are you sure you want to delete this maintenance record?\n\n" +
-            $"Date: {maintenance.MaintenanceDate:dd-MMM-yyyy}\n" +
-            $"Vehicle: {maintenance.VehicleNo}\n" +
-            $"Description: {maintenance.Description}\n" +
-            $"Amount: ₹{maintenance.Amount:N2}",
+            $"Are you sure you want to delete {count} maintenance record(s)?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
@@ -489,13 +577,19 @@ public partial class TransactionViewerForm : Form
         {
             try
             {
-                MaintenanceRepository.Delete(maintenance.MaintenanceId);
-                MessageBox.Show("Maintenance record deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                int successCount = 0;
+                foreach (DataGridViewRow row in dgvMaintenance.SelectedRows)
+                {
+                    var maintenance = (Maintenance)row.DataBoundItem;
+                    MaintenanceRepository.Delete(maintenance.MaintenanceId);
+                    successCount++;
+                }
+                MessageBox.Show($"{successCount} maintenance record(s) deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadMaintenance();
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to delete maintenance record");
+                Logger.LogError(ex, "Failed to delete maintenance record(s)");
                 MessageBox.Show("Failed to delete maintenance: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -552,7 +646,16 @@ public partial class TransactionViewerForm : Form
         Cursor = Cursors.WaitCursor;
         try
         {
-            var result = Services.InvoiceGenerator.GenerateSaleInvoice(selectedSale);
+            // Reload the sale from database to ensure all data is properly loaded
+            var sale = SaleRepository.GetById(selectedSale.SaleId);
+            if (sale == null)
+            {
+                MessageBox.Show("Sale not found.", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            var result = Services.InvoiceGenerator.GenerateSaleInvoice(sale);
             
             if (result.Success)
             {
@@ -586,7 +689,16 @@ public partial class TransactionViewerForm : Form
         Cursor = Cursors.WaitCursor;
         try
         {
-            var result = Services.InvoiceGenerator.GeneratePurchaseInvoice(selectedPurchase);
+            // Reload the purchase from database to ensure all data is properly loaded
+            var purchase = PurchaseRepository.GetById(selectedPurchase.PurchaseId);
+            if (purchase == null)
+            {
+                MessageBox.Show("Purchase not found.", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            var result = Services.InvoiceGenerator.GeneratePurchaseInvoice(purchase);
             
             if (result.Success)
             {

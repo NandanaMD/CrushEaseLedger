@@ -15,7 +15,7 @@ public static class VehicleRepository
         using var connection = DatabaseManager.GetConnection();
         connection.Open();
         
-        string sql = "SELECT * FROM vehicles" + (activeOnly ? " WHERE is_active = 1" : "") + " ORDER BY vehicle_no";
+        string sql = "SELECT * FROM vehicles WHERE is_deleted = 0" + (activeOnly ? " AND is_active = 1" : "") + " ORDER BY vehicle_no";
         using var cmd = new SQLiteCommand(sql, connection);
         using var reader = cmd.ExecuteReader();
         
@@ -82,15 +82,17 @@ public static class VehicleRepository
     
     public static void Delete(int id)
     {
-        // Soft delete
-        string sql = "UPDATE vehicles SET is_active = 0 WHERE vehicle_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        // Soft delete - mark as deleted
+        string sql = "UPDATE vehicles SET is_deleted = 1, deleted_at = @deletedAt WHERE vehicle_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
     public static bool Exists(string vehicleNo, int? excludeId = null)
     {
-        string sql = "SELECT COUNT(*) FROM vehicles WHERE LOWER(vehicle_no) = LOWER(@vehicleNo)";
+        string sql = "SELECT COUNT(*) FROM vehicles WHERE LOWER(vehicle_no) = LOWER(@vehicleNo) AND is_deleted = 0";
         if (excludeId.HasValue)
             sql += " AND vehicle_id != @excludeId";
         
@@ -114,7 +116,7 @@ public static class VendorRepository
         using var connection = DatabaseManager.GetConnection();
         connection.Open();
         
-        string sql = "SELECT * FROM vendors" + (activeOnly ? " WHERE is_active = 1" : "") + " ORDER BY vendor_name";
+        string sql = "SELECT * FROM vendors WHERE is_deleted = 0" + (activeOnly ? " AND is_active = 1" : "") + " ORDER BY vendor_name";
         using var cmd = new SQLiteCommand(sql, connection);
         using var reader = cmd.ExecuteReader();
         
@@ -189,14 +191,16 @@ public static class VendorRepository
     
     public static void Delete(int id)
     {
-        string sql = "UPDATE vendors SET is_active = 0 WHERE vendor_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        string sql = "UPDATE vendors SET is_deleted = 1, deleted_at = @deletedAt WHERE vendor_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
     public static bool Exists(string vendorName, int? excludeId = null)
     {
-        string sql = "SELECT COUNT(*) FROM vendors WHERE LOWER(vendor_name) = LOWER(@vendorName)";
+        string sql = "SELECT COUNT(*) FROM vendors WHERE LOWER(vendor_name) = LOWER(@vendorName) AND is_deleted = 0";
         if (excludeId.HasValue)
             sql += " AND vendor_id != @excludeId";
         
@@ -220,7 +224,7 @@ public static class BuyerRepository
         using var connection = DatabaseManager.GetConnection();
         connection.Open();
         
-        string sql = "SELECT * FROM buyers" + (activeOnly ? " WHERE is_active = 1" : "") + " ORDER BY buyer_name";
+        string sql = "SELECT * FROM buyers WHERE is_deleted = 0" + (activeOnly ? " AND is_active = 1" : "") + " ORDER BY buyer_name";
         using var cmd = new SQLiteCommand(sql, connection);
         using var reader = cmd.ExecuteReader();
         
@@ -295,14 +299,16 @@ public static class BuyerRepository
     
     public static void Delete(int id)
     {
-        string sql = "UPDATE buyers SET is_active = 0 WHERE buyer_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        string sql = "UPDATE buyers SET is_deleted = 1, deleted_at = @deletedAt WHERE buyer_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
     public static bool Exists(string buyerName, int? excludeId = null)
     {
-        string sql = "SELECT COUNT(*) FROM buyers WHERE LOWER(buyer_name) = LOWER(@buyerName)";
+        string sql = "SELECT COUNT(*) FROM buyers WHERE LOWER(buyer_name) = LOWER(@buyerName) AND is_deleted = 0";
         if (excludeId.HasValue)
             sql += " AND buyer_id != @excludeId";
         
@@ -326,7 +332,7 @@ public static class MaterialRepository
         using var connection = DatabaseManager.GetConnection();
         connection.Open();
         
-        string sql = "SELECT * FROM materials" + (activeOnly ? " WHERE is_active = 1" : "") + " ORDER BY material_name";
+        string sql = "SELECT * FROM materials WHERE is_deleted = 0" + (activeOnly ? " AND is_active = 1" : "") + " ORDER BY material_name";
         using var cmd = new SQLiteCommand(sql, connection);
         using var reader = cmd.ExecuteReader();
         
@@ -405,14 +411,16 @@ public static class MaterialRepository
     
     public static void Delete(int id)
     {
-        string sql = "UPDATE materials SET is_active = 0 WHERE material_id = @id";
-        DatabaseManager.ExecuteNonQuery(sql, new SQLiteParameter("@id", id));
+        string sql = "UPDATE materials SET is_deleted = 1, deleted_at = @deletedAt WHERE material_id = @id";
+        DatabaseManager.ExecuteNonQuery(sql, 
+            new SQLiteParameter("@deletedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+            new SQLiteParameter("@id", id));
         Services.BackupService.BackupAfterTransaction();
     }
     
     public static bool Exists(string materialName, int? excludeId = null)
     {
-        string sql = "SELECT COUNT(*) FROM materials WHERE LOWER(material_name) = LOWER(@materialName)";
+        string sql = "SELECT COUNT(*) FROM materials WHERE LOWER(material_name) = LOWER(@materialName) AND is_deleted = 0";
         if (excludeId.HasValue)
             sql += " AND material_id != @excludeId";
         
@@ -439,6 +447,11 @@ public static class CompanySettingsRepository
         
         if (reader.Read())
         {
+            // Column indices (0-based):
+            // 0: settings_id, 1: company_name, 2: address, 3: phone, 4: email
+            // 5: gst_number, 6: website, 7: logo_image, 8: invoice_prefix
+            // 9: payment_terms, 10: terms_and_conditions, 11: updated_at, 12: font_size_scale
+            
             return new CompanySettings
             {
                 SettingsId = reader.GetInt32(0),
@@ -452,7 +465,8 @@ public static class CompanySettingsRepository
                 InvoicePrefix = reader.GetString(8),
                 PaymentTerms = reader.GetString(9),
                 TermsAndConditions = reader.IsDBNull(10) ? null : reader.GetString(10),
-                UpdatedAt = DateTime.Parse(reader.GetString(11))
+                UpdatedAt = DateTime.Parse(reader.GetString(11)),
+                FontSizeScale = reader.FieldCount > 12 && !reader.IsDBNull(12) ? Convert.ToSingle(reader.GetValue(12)) : 1.0f
             };
         }
         
@@ -468,9 +482,9 @@ public static class CompanySettingsRepository
             // Insert
             string sql = @"INSERT INTO company_settings 
                 (settings_id, company_name, address, phone, email, gst_number, website, 
-                 logo_image, invoice_prefix, payment_terms, terms_and_conditions, updated_at)
+                 logo_image, invoice_prefix, payment_terms, terms_and_conditions, font_size_scale, updated_at)
                 VALUES (1, @companyName, @address, @phone, @email, @gstNumber, @website, 
-                        @logoImage, @invoicePrefix, @paymentTerms, @termsAndConditions, @updatedAt)";
+                        @logoImage, @invoicePrefix, @paymentTerms, @termsAndConditions, @fontSizeScale, @updatedAt)";
             
             DatabaseManager.ExecuteNonQuery(sql,
                 new SQLiteParameter("@companyName", settings.CompanyName),
@@ -483,6 +497,7 @@ public static class CompanySettingsRepository
                 new SQLiteParameter("@invoicePrefix", settings.InvoicePrefix),
                 new SQLiteParameter("@paymentTerms", settings.PaymentTerms),
                 new SQLiteParameter("@termsAndConditions", (object?)settings.TermsAndConditions ?? DBNull.Value),
+                new SQLiteParameter("@fontSizeScale", settings.FontSizeScale),
                 new SQLiteParameter("@updatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
             );
         }
@@ -500,6 +515,7 @@ public static class CompanySettingsRepository
                 invoice_prefix = @invoicePrefix,
                 payment_terms = @paymentTerms,
                 terms_and_conditions = @termsAndConditions,
+                font_size_scale = @fontSizeScale,
                 updated_at = @updatedAt
                 WHERE settings_id = 1";
             
@@ -514,9 +530,18 @@ public static class CompanySettingsRepository
                 new SQLiteParameter("@invoicePrefix", settings.InvoicePrefix),
                 new SQLiteParameter("@paymentTerms", settings.PaymentTerms),
                 new SQLiteParameter("@termsAndConditions", (object?)settings.TermsAndConditions ?? DBNull.Value),
+                new SQLiteParameter("@fontSizeScale", settings.FontSizeScale),
                 new SQLiteParameter("@updatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
             );
         }
+    }
+    
+    /// <summary>
+    /// Save settings (alias for SaveOrUpdate)
+    /// </summary>
+    public static void Save(CompanySettings settings)
+    {
+        SaveOrUpdate(settings);
     }
 }
 

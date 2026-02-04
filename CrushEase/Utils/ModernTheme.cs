@@ -18,6 +18,13 @@ public static class ModernTheme
     public static readonly Color GridBorder = Color.FromArgb(229, 231, 235);
     public static readonly Color AlternateRow = Color.FromArgb(249, 250, 251);
     
+    // Semantic colors for UI feedback
+    public static readonly Color PrimaryColor = TealAccent;
+    public static readonly Color ForegroundColor = DarkGray;
+    public static readonly Color SuccessColor = Color.FromArgb(34, 197, 94);
+    public static readonly Color WarningColor = Color.FromArgb(234, 179, 8);
+    public static readonly Color DangerColor = Color.FromArgb(239, 68, 68);
+    
     /// <summary>
     /// Apply modern theme to a form
     /// </summary>

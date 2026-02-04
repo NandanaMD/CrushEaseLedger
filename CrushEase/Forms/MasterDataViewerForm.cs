@@ -13,6 +13,25 @@ public partial class MasterDataViewerForm : Form
         InitializeComponent();
     }
     
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        // Handle Delete key shortcut
+        if (keyData == Keys.Delete)
+        {
+            // Determine which tab is active and call appropriate delete handler
+            if (tabControl.SelectedTab == tabVehicles)
+                BtnDeleteVehicle_Click(this, EventArgs.Empty);
+            else if (tabControl.SelectedTab == tabVendors)
+                BtnDeleteVendor_Click(this, EventArgs.Empty);
+            else if (tabControl.SelectedTab == tabBuyers)
+                BtnDeleteBuyer_Click(this, EventArgs.Empty);
+            else if (tabControl.SelectedTab == tabMaterials)
+                BtnDeleteMaterial_Click(this, EventArgs.Empty);
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+    
     private void MasterDataViewerForm_Load(object sender, EventArgs e)
     {
         LoadAllData();
@@ -203,5 +222,134 @@ public partial class MasterDataViewerForm : Form
     private void BtnClose_Click(object sender, EventArgs e)
     {
         this.Close();
+    }
+    
+    // Delete handlers
+    private void BtnDeleteVehicle_Click(object sender, EventArgs e)
+    {
+        if (dgvVehicles.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a vehicle to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var vehicle = (Vehicle)dgvVehicles.SelectedRows[0].DataBoundItem;
+        
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete vehicle '{vehicle.VehicleNo}'?\n\nNote: This will soft-delete (deactivate) the vehicle.",
+            "Confirm Delete",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        
+        if (result != DialogResult.Yes)
+            return;
+        
+        try
+        {
+            VehicleRepository.Delete(vehicle.VehicleId);
+            LoadVehicles();
+            MessageBox.Show("Vehicle deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            Utils.Logger.LogError(ex, "Failed to delete vehicle");
+            MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    private void BtnDeleteVendor_Click(object sender, EventArgs e)
+    {
+        if (dgvVendors.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a vendor to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var vendor = (Vendor)dgvVendors.SelectedRows[0].DataBoundItem;
+        
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete vendor '{vendor.VendorName}'?\n\nNote: This will soft-delete (deactivate) the vendor.",
+            "Confirm Delete",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        
+        if (result != DialogResult.Yes)
+            return;
+        
+        try
+        {
+            VendorRepository.Delete(vendor.VendorId);
+            LoadVendors();
+            MessageBox.Show("Vendor deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            Utils.Logger.LogError(ex, "Failed to delete vendor");
+            MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    private void BtnDeleteBuyer_Click(object sender, EventArgs e)
+    {
+        if (dgvBuyers.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a buyer to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var buyer = (Buyer)dgvBuyers.SelectedRows[0].DataBoundItem;
+        
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete buyer '{buyer.BuyerName}'?\n\nNote: This will soft-delete (deactivate) the buyer.",
+            "Confirm Delete",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        
+        if (result != DialogResult.Yes)
+            return;
+        
+        try
+        {
+            BuyerRepository.Delete(buyer.BuyerId);
+            LoadBuyers();
+            MessageBox.Show("Buyer deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            Utils.Logger.LogError(ex, "Failed to delete buyer");
+            MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    
+    private void BtnDeleteMaterial_Click(object sender, EventArgs e)
+    {
+        if (dgvMaterials.SelectedRows.Count == 0)
+        {
+            MessageBox.Show("Please select a material to delete", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        var material = (Material)dgvMaterials.SelectedRows[0].DataBoundItem;
+        
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete material '{material.MaterialName}'?\n\nNote: This will soft-delete (deactivate) the material.",
+            "Confirm Delete",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        
+        if (result != DialogResult.Yes)
+            return;
+        
+        try
+        {
+            MaterialRepository.Delete(material.MaterialId);
+            LoadMaterials();
+            MessageBox.Show("Material deleted successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            Utils.Logger.LogError(ex, "Failed to delete material");
+            MessageBox.Show("Failed to delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

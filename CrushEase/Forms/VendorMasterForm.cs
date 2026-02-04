@@ -21,6 +21,9 @@ public partial class VendorMasterForm : Form
             case Keys.Control | Keys.S:
                 BtnSave_Click(this, EventArgs.Empty);
                 return true;
+            case Keys.Delete:
+                BtnDelete_Click(this, EventArgs.Empty);
+                return true;
             case Keys.Escape:
                 BtnClose_Click(this, EventArgs.Empty);
                 return true;

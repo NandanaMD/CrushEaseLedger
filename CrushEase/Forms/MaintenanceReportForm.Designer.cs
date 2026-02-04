@@ -115,6 +115,7 @@ namespace CrushEase.Forms
             this.dgvReport.ReadOnly = true;
             this.dgvReport.RowHeadersVisible = false;
             this.dgvReport.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvReport.MultiSelect = true;
             this.dgvReport.Size = new Size(976, 420);
             this.dgvReport.TabIndex = 1;
             

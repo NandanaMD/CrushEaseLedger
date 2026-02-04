@@ -15,6 +15,7 @@ namespace CrushEase.Forms
         private CheckBox chkVehiclesActiveOnly;
         private Label lblVehicleSearch;
         private Label lblVehicleCount;
+        private Button btnDeleteVehicle;
         
         // Vendors tab controls
         private DataGridView dgvVendors;
@@ -22,6 +23,7 @@ namespace CrushEase.Forms
         private CheckBox chkVendorsActiveOnly;
         private Label lblVendorSearch;
         private Label lblVendorCount;
+        private Button btnDeleteVendor;
         
         // Buyers tab controls
         private DataGridView dgvBuyers;
@@ -29,6 +31,7 @@ namespace CrushEase.Forms
         private CheckBox chkBuyersActiveOnly;
         private Label lblBuyerSearch;
         private Label lblBuyerCount;
+        private Button btnDeleteBuyer;
         
         // Materials tab controls
         private DataGridView dgvMaterials;
@@ -36,6 +39,7 @@ namespace CrushEase.Forms
         private CheckBox chkMaterialsActiveOnly;
         private Label lblMaterialSearch;
         private Label lblMaterialCount;
+        private Button btnDeleteMaterial;
         
         // Common controls
         private Button btnRefresh;
@@ -64,6 +68,7 @@ namespace CrushEase.Forms
             this.chkVehiclesActiveOnly = new CheckBox();
             this.lblVehicleSearch = new Label();
             this.lblVehicleCount = new Label();
+            this.btnDeleteVehicle = new Button();
             
             // Vendors
             this.dgvVendors = new DataGridView();
@@ -71,6 +76,7 @@ namespace CrushEase.Forms
             this.chkVendorsActiveOnly = new CheckBox();
             this.lblVendorSearch = new Label();
             this.lblVendorCount = new Label();
+            this.btnDeleteVendor = new Button();
             
             // Buyers
             this.dgvBuyers = new DataGridView();
@@ -78,6 +84,7 @@ namespace CrushEase.Forms
             this.chkBuyersActiveOnly = new CheckBox();
             this.lblBuyerSearch = new Label();
             this.lblBuyerCount = new Label();
+            this.btnDeleteBuyer = new Button();
             
             // Materials
             this.dgvMaterials = new DataGridView();
@@ -85,6 +92,7 @@ namespace CrushEase.Forms
             this.chkMaterialsActiveOnly = new CheckBox();
             this.lblMaterialSearch = new Label();
             this.lblMaterialCount = new Label();
+            this.btnDeleteMaterial = new Button();
             
             // Common
             this.btnRefresh = new Button();
@@ -115,6 +123,7 @@ namespace CrushEase.Forms
             
             // tabVehicles
             this.tabVehicles.Controls.Add(this.dgvVehicles);
+            this.tabVehicles.Controls.Add(this.btnDeleteVehicle);
             this.tabVehicles.Controls.Add(this.txtVehicleSearch);
             this.tabVehicles.Controls.Add(this.chkVehiclesActiveOnly);
             this.tabVehicles.Controls.Add(this.lblVehicleSearch);
@@ -172,11 +181,21 @@ namespace CrushEase.Forms
             this.dgvVehicles.ReadOnly = true;
             this.dgvVehicles.RowHeadersVisible = false;
             this.dgvVehicles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvVehicles.Size = new Size(972, 517);
+            this.dgvVehicles.Size = new Size(892, 517);
             this.dgvVehicles.TabIndex = 4;
+            
+            // btnDeleteVehicle
+            this.btnDeleteVehicle.Location = new Point(908, 45);
+            this.btnDeleteVehicle.Name = "btnDeleteVehicle";
+            this.btnDeleteVehicle.Size = new Size(74, 30);
+            this.btnDeleteVehicle.TabIndex = 5;
+            this.btnDeleteVehicle.Text = "Delete";
+            this.btnDeleteVehicle.UseVisualStyleBackColor = true;
+            this.btnDeleteVehicle.Click += new EventHandler(this.BtnDeleteVehicle_Click);
             
             // tabVendors
             this.tabVendors.Controls.Add(this.dgvVendors);
+            this.tabVendors.Controls.Add(this.btnDeleteVendor);
             this.tabVendors.Controls.Add(this.txtVendorSearch);
             this.tabVendors.Controls.Add(this.chkVendorsActiveOnly);
             this.tabVendors.Controls.Add(this.lblVendorSearch);
@@ -234,11 +253,21 @@ namespace CrushEase.Forms
             this.dgvVendors.ReadOnly = true;
             this.dgvVendors.RowHeadersVisible = false;
             this.dgvVendors.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvVendors.Size = new Size(972, 517);
+            this.dgvVendors.Size = new Size(892, 517);
             this.dgvVendors.TabIndex = 4;
+            
+            // btnDeleteVendor
+            this.btnDeleteVendor.Location = new Point(908, 45);
+            this.btnDeleteVendor.Name = "btnDeleteVendor";
+            this.btnDeleteVendor.Size = new Size(74, 30);
+            this.btnDeleteVendor.TabIndex = 5;
+            this.btnDeleteVendor.Text = "Delete";
+            this.btnDeleteVendor.UseVisualStyleBackColor = true;
+            this.btnDeleteVendor.Click += new EventHandler(this.BtnDeleteVendor_Click);
             
             // tabBuyers
             this.tabBuyers.Controls.Add(this.dgvBuyers);
+            this.tabBuyers.Controls.Add(this.btnDeleteBuyer);
             this.tabBuyers.Controls.Add(this.txtBuyerSearch);
             this.tabBuyers.Controls.Add(this.chkBuyersActiveOnly);
             this.tabBuyers.Controls.Add(this.lblBuyerSearch);
@@ -296,11 +325,21 @@ namespace CrushEase.Forms
             this.dgvBuyers.ReadOnly = true;
             this.dgvBuyers.RowHeadersVisible = false;
             this.dgvBuyers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBuyers.Size = new Size(972, 517);
+            this.dgvBuyers.Size = new Size(892, 517);
             this.dgvBuyers.TabIndex = 4;
+            
+            // btnDeleteBuyer
+            this.btnDeleteBuyer.Location = new Point(908, 45);
+            this.btnDeleteBuyer.Name = "btnDeleteBuyer";
+            this.btnDeleteBuyer.Size = new Size(74, 30);
+            this.btnDeleteBuyer.TabIndex = 5;
+            this.btnDeleteBuyer.Text = "Delete";
+            this.btnDeleteBuyer.UseVisualStyleBackColor = true;
+            this.btnDeleteBuyer.Click += new EventHandler(this.BtnDeleteBuyer_Click);
             
             // tabMaterials
             this.tabMaterials.Controls.Add(this.dgvMaterials);
+            this.tabMaterials.Controls.Add(this.btnDeleteMaterial);
             this.tabMaterials.Controls.Add(this.txtMaterialSearch);
             this.tabMaterials.Controls.Add(this.chkMaterialsActiveOnly);
             this.tabMaterials.Controls.Add(this.lblMaterialSearch);
@@ -358,8 +397,17 @@ namespace CrushEase.Forms
             this.dgvMaterials.ReadOnly = true;
             this.dgvMaterials.RowHeadersVisible = false;
             this.dgvMaterials.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvMaterials.Size = new Size(972, 517);
+            this.dgvMaterials.Size = new Size(892, 517);
             this.dgvMaterials.TabIndex = 4;
+            
+            // btnDeleteMaterial
+            this.btnDeleteMaterial.Location = new Point(908, 45);
+            this.btnDeleteMaterial.Name = "btnDeleteMaterial";
+            this.btnDeleteMaterial.Size = new Size(74, 30);
+            this.btnDeleteMaterial.TabIndex = 5;
+            this.btnDeleteMaterial.Text = "Delete";
+            this.btnDeleteMaterial.UseVisualStyleBackColor = true;
+            this.btnDeleteMaterial.Click += new EventHandler(this.BtnDeleteMaterial_Click);
             
             // btnRefresh
             this.btnRefresh.Location = new Point(806, 615);

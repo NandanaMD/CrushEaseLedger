@@ -21,6 +21,9 @@ public partial class MaterialMasterForm : Form
             case Keys.Control | Keys.S:
                 BtnSave_Click(this, EventArgs.Empty);
                 return true;
+            case Keys.Delete:
+                BtnDelete_Click(this, EventArgs.Empty);
+                return true;
             case Keys.Escape:
                 BtnClose_Click(this, EventArgs.Empty);
                 return true;
@@ -97,6 +100,7 @@ public partial class MaterialMasterForm : Form
     {
         txtMaterialName.Text = "";
         txtUnit.Text = "";
+        txtConversionFactor.Text = "0.04";
         txtNotes.Text = "";
         txtMaterialName.Focus();
     }
@@ -117,6 +121,14 @@ public partial class MaterialMasterForm : Form
             return;
         }
         
+        // Validate conversion factor
+        if (!decimal.TryParse(txtConversionFactor.Text, out var conversionFactor) || conversionFactor <= 0)
+        {
+            MessageBox.Show("Please enter a valid conversion factor (greater than 0)", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            txtConversionFactor.Focus();
+            return;
+        }
+        
         try
         {
             // Check for duplicates
@@ -131,6 +143,7 @@ public partial class MaterialMasterForm : Form
             {
                 MaterialName = txtMaterialName.Text.Trim(),
                 Unit = txtUnit.Text.Trim(),
+                ConversionFactor_MT_to_CFT = conversionFactor,
                 Notes = string.IsNullOrWhiteSpace(txtNotes.Text) ? null : txtNotes.Text.Trim(),
                 IsActive = true
             };
@@ -139,6 +152,7 @@ public partial class MaterialMasterForm : Form
             
             txtMaterialName.Text = "";
             txtUnit.Text = "";
+            txtConversionFactor.Text = "0.04";
             txtNotes.Text = "";
             LoadMaterials();
             

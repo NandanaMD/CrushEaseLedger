@@ -1,5 +1,6 @@
 using CrushEase.Data;
 using CrushEase.Models;
+using CrushEase.Services;
 using CrushEase.Utils;
 
 namespace CrushEase.Forms;
@@ -11,6 +12,7 @@ public partial class PurchaseEntryForm : Form
     private List<Material> _materials;
     private int? _editPurchaseId;
     private Material? _selectedMaterial;
+    private int? _lastSavedPurchaseId;
     
     public PurchaseEntryForm()
     {
@@ -380,6 +382,10 @@ public partial class PurchaseEntryForm : Form
             
             PurchaseRepository.Insert(purchase);
             
+            // Store the last saved purchase ID for receipt printing
+            _lastSavedPurchaseId = purchase.PurchaseId;
+            btnPrintReceipt.Enabled = true;
+            
             MessageBox.Show("Purchase saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             
             // Clear form for next entry
@@ -446,11 +452,67 @@ public partial class PurchaseEntryForm : Form
         txtAmount.Text = "0.00";
         lblCalculatedCFT.Visible = false;
         txtCalculatedCFT.Visible = false;
+        _lastSavedPurchaseId = null;
+        btnPrintReceipt.Enabled = false;
         cmbVehicle.Focus();
     }
     
     private void BtnClose_Click(object sender, EventArgs e)
     {
         Close();
+    }
+    
+    private void ContextMenuEntry_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Enable/disable the context menu item based on whether we have a saved purchase
+        menuItemPrintReceipt.Enabled = _lastSavedPurchaseId.HasValue;
+    }
+    
+    private void BtnPrintReceipt_Click(object sender, EventArgs e)
+    {
+        if (!_lastSavedPurchaseId.HasValue)
+        {
+            MessageBox.Show("No purchase to print receipt for.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        
+        try
+        {
+            var purchase = PurchaseRepository.GetById(_lastSavedPurchaseId.Value);
+            if (purchase == null)
+            {                MessageBox.Show("Purchase not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            var result = InvoiceGenerator.GeneratePurchaseReceipt(purchase);
+            
+            if (result.Success)
+            {
+                var dialogResult = MessageBox.Show(
+                    $"Receipt generated successfully!\n\nReceipt No: {result.InvoiceNumber}\nLocation: {result.FilePath}\n\nWould you like to open the receipt?",
+                    "Success",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information
+                );
+                
+                if (dialogResult == DialogResult.Yes && !string.IsNullOrEmpty(result.FilePath))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = result.FilePath,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            else
+            {
+                MessageBox.Show($"Failed to generate receipt:\n{result.ErrorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to print receipt");
+            MessageBox.Show($"Failed to print receipt: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }
